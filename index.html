@@ -16,16 +16,42 @@
             --danger: #ef4444;
             --text: #e2e8f0;
             --border: rgba(255, 255, 255, 0.08);
+            --scroll-thumb: rgba(59, 130, 246, 0.5); /* Синий для скролла */
+            --scroll-track: rgba(0, 0, 0, 0.2);
         }
+
+        /* КАСТОМНЫЙ СКРОЛЛБАР */
+        ::-webkit-scrollbar {
+            width: 5px; /* Очень тонкий */
+            height: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--scroll-track);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--scroll-thumb);
+            border-radius: 10px;
+            transition: 0.3s;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent);
+        }
+
+        /* Для Firefox */
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: var(--scroll-thumb) var(--scroll-track);
+        }
+
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
         body { background: var(--bg); color: var(--text); padding: 15px; min-height: 100vh; background-image: radial-gradient(circle at top right, #111827, #05070a); }
         .container { width: 100%; max-width: 1400px; margin: 0 auto; display: flex; flex-direction: column; gap: 15px; }
 
         .settings-bar { display: flex; gap: 15px; align-items: center; padding: 10px 20px; background: var(--panel); border-radius: 15px; border: 1px solid var(--border); backdrop-filter: blur(10px); }
         .s-field { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 800; color: var(--accent); }
-        .s-field input { background: rgba(0,0,0,0.3); border: 1px solid var(--border); color: #fff; padding: 6px 10px; border-radius: 8px; width: 120px; outline: none; }
+        .s-field input { background: rgba(0,0,0,0.3); border: 1px solid var(--border); color: #fff; padding: 6px 10px; border-radius: 8px; width: 140px; outline: none; }
 
-        /* ЦЕНТРАЛЬНЫЙ БЛОК ОСТАТКА */
         .header-balance-info {
             flex-grow: 1;
             display: flex;
@@ -91,14 +117,11 @@
             body { padding: 8px; }
             .settings-bar { display: grid; grid-template-columns: 1fr 1fr; padding: 12px; gap: 8px; }
             .header-balance-info { grid-column: span 2; border: none; border-top: 1px solid var(--border); padding-top: 10px; margin: 5px 0; }
-            .settings-bar .s-field:nth-child(3) { margin-left: 0 !important; } 
             .s-field input { width: 100%; padding: 8px; }
             .settings-bar .btn-main { font-size: 9px; padding: 12px 5px; margin-left: 0 !important; }
             .top-dash { grid-template-columns: 1fr; gap: 10px; }
-            .glass { padding: 15px; border-radius: 15px; }
             .inc-val { font-size: 26px; }
             .cal-grid { grid-template-columns: repeat(7, 1fr); gap: 4px; }
-            .day { border-radius: 6px; font-size: 10px; padding: 4px 0; }
         }
     </style>
 </head>
@@ -218,27 +241,7 @@
         </div>
     </div>
 
-    <div class="table-wrap" style="max-height: 350px; max-width: 99%;">
-<style>
-.table-wrap { max-height: 350px; max-width: 99%; }
-
-@media screen and (max-width: 768px) {
-.table-wrap { max-height: 250px; max-width: 97%; }
-
-.table-wrap input,
-.table-wrap select,
-.table-wrap textarea {
-    font-size: 14px;
-    padding: 6px;
-}
-
-.table-wrap td,
-.table-wrap th {
-    padding: 6px;
-    font-size: 13px;
-}
-}
-</style>
+    <div class="table-wrap" style="max-height: 250px;">
         <table>
             <thead>
                 <tr><th>ДАТА</th><th>ТИП ОПЕРАЦИИ</th><th>СУММА</th><th>ИНФО</th><th style="text-align:right">УПР.</th></tr>
@@ -331,10 +334,9 @@
             }
         });
 
-        // ОБНОВЛЯЕМ ОСТАТОК В ДВУХ МЕСТАХ
         const formattedBalance = Math.round(totalBalance).toLocaleString() + ' ₴';
-        document.getElementById('hb-val').innerText = formattedBalance; // Наверху
-        document.getElementById('salaryRemainder').innerText = formattedBalance; // Внизу
+        document.getElementById('hb-val').innerText = formattedBalance;
+        document.getElementById('salaryRemainder').innerText = formattedBalance;
 
         document.getElementById('valEarned').innerText = Math.round(earned).toLocaleString() + ' ₴';
         const percent = Math.min(Math.round((earned / gM) * 100), 100);
@@ -415,16 +417,41 @@
         const data = labels.map(day => dayStats[day] || 0);
         const gradient = ctx.createLinearGradient(0, 0, 0, 150);
         gradient.addColorStop(0, 'rgba(59, 130, 246, 0.4)'); gradient.addColorStop(1, 'rgba(59, 130, 246, 0)');  
+        
         if (myChart) {
-            myChart.data.labels = labels; myChart.data.datasets[0].data = data; myChart.update('none');
+            myChart.data.labels = labels; 
+            myChart.data.datasets[0].data = data; 
+            myChart.options.scales.x.ticks.maxTicksLimit = daysCount; // СИЛОВОЕ ОТОБРАЖЕНИЕ ВСЕХ ДНЕЙ
+            myChart.update('none');
         } else {
             myChart = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: labels,
-                    datasets: [{ label: 'Оплат', data: data, borderColor: '#3b82f6', borderWidth: 2, fill: true, backgroundColor: gradient, tension: 0.4, pointRadius: 0 }]
+                    datasets: [{ label: 'Оплат', data: data, borderColor: '#3b82f6', borderWidth: 2, fill: true, backgroundColor: gradient, tension: 0.4, pointRadius: 2, pointBackgroundColor: '#3b82f6' }]
                 },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { color: 'rgba(226, 232, 240, 0.3)', font: { size: 9 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 15 } }, y: { grid: { color: 'rgba(255, 255, 255, 0.03)' }, beginAtZero: true, ticks: { color: 'rgba(226, 232, 240, 0.3)', font: { size: 9 }, stepSize: 1 } } } }
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { legend: { display: false } }, 
+                    scales: { 
+                        x: { 
+                            grid: { display: false }, 
+                            ticks: { 
+                                color: 'rgba(226, 232, 240, 0.5)', 
+                                font: { size: 8 }, 
+                                maxRotation: 0, 
+                                autoSkip: false, // ОТКЛЮЧАЕМ ПРОПУСКИ ДАТ
+                                maxTicksLimit: 31 
+                            } 
+                        }, 
+                        y: { 
+                            grid: { color: 'rgba(255, 255, 255, 0.03)' }, 
+                            beginAtZero: true, 
+                            ticks: { color: 'rgba(226, 232, 240, 0.3)', font: { size: 9 }, stepSize: 1 } 
+                        } 
+                    } 
+                }
             });
         }
     }
