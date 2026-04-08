@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus OS v7.8 | Top-Down History</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg: #05070a;
+            --panel: rgba(22, 28, 45, 0.7);
+            --accent: #3b82f6;
+            --success: #10b981;
+            --danger: #ef4444;
+            --text: #e2e8f0;
+            --border: rgba(255, 255, 255, 0.08);
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background: var(--bg); color: var(--text); padding: 15px; min-height: 100vh; background-image: radial-gradient(circle at top right, #111827, #05070a); }
+        .container { width: 100%; max-width: 1400px; margin: 0 auto; display: flex; flex-direction: column; gap: 15px; }
+
+        .settings-bar { display: flex; gap: 15px; align-items: center; padding: 10px 20px; background: var(--panel); border-radius: 15px; border: 1px solid var(--border); backdrop-filter: blur(10px); }
+        .s-field { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 800; color: var(--accent); }
+        .s-field input { background: rgba(0,0,0,0.3); border: 1px solid var(--border); color: #fff; padding: 6px 10px; border-radius: 8px; width: 150px; outline: none; }
+
+        .top-dash { display: grid; grid-template-columns: 320px 1fr 300px; gap: 15px; }
+        .glass { background: var(--panel); backdrop-filter: blur(20px); border: 1px solid var(--border); border-radius: 20px; padding: 20px; }
+
+        .inc-label { font-size: 10px; font-weight: 800; color: var(--accent); letter-spacing: 1px; margin-bottom: 5px; text-transform: uppercase; }
+        .inc-val { font-size: 34px; font-weight: 900; letter-spacing: -1px; margin-bottom: 10px; }
+        .prog-bar-bg { background: rgba(255,255,255,0.05); height: 8px; border-radius: 10px; overflow: hidden; margin-top: 10px; }
+        .prog-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent), var(--success)); transition: 1s ease; }
+
+        .stat-scroll { display: flex; flex-direction: column; gap: 8px; max-height: 230px; overflow-y: auto; padding-right: 5px; }
+        .stat-item { display: flex; justify-content: space-between; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid var(--border); font-size: 12px; }
+        .stat-item span:last-child { font-weight: 900; color: var(--success); }
+
+        .cal-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(35px, 1fr)); gap: 6px; margin-top: 10px; }
+        .day { 
+            aspect-ratio: 1/1; border-radius: 10px; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border); 
+            display: flex; align-items: center; justify-content: center; font-size: 11px; color: rgba(255,255,255,0.2); 
+            transition: 0.3s; flex-direction: column; gap: 2px;
+        }
+        .day.has-pay { background: rgba(59, 130, 246, 0.15); border-color: var(--accent); color: #fff; }
+        .day.target-met { 
+            background: rgba(16, 185, 129, 0.1); border: 2px solid var(--success); color: var(--success); 
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.2); font-weight: 900;
+        }
+
+        .graph-container { margin-top: 20px; width: 100%; height: 150px; border-radius: 15px; background: rgba(0,0,0,0.2); padding: 10px; border: 1px solid var(--border); }
+
+        .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
+        input, select, .btn-main { background: rgba(0,0,0,0.4); border: 1px solid var(--border); color: white; padding: 12px; border-radius: 12px; font-size: 14px; outline: none; }
+        .btn-main { background: var(--accent); border: none; font-weight: 900; cursor: pointer; transition: 0.3s; }
+        .btn-main:hover { filter: brightness(1.2); }
+
+        .table-wrap { max-height: 450px; overflow-y: auto; border-radius: 20px; border: 1px solid var(--border); background: var(--panel); }
+        table { width: 100%; border-collapse: collapse; }
+        th { position: sticky; top: 0; background: #0b111d; text-align: left; padding: 12px; font-size: 10px; color: var(--accent); border-bottom: 1px solid var(--border); z-index: 5; }
+        td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 13px; }
+
+        .btn-tool { background: none; border: none; cursor: pointer; font-size: 16px; opacity: 0.5; transition: 0.2s; }
+        .btn-tool:hover { opacity: 1; transform: scale(1.1); }
+
+        #sync-bar { position: fixed; top: 0; left: 0; width: 0%; height: 3px; background: var(--success); z-index: 1000; transition: 0.5s; }
+    </style>
+</head>
+<body>
+
+<div id="sync-bar"></div>
+
+<div class="container">
+    <div class="settings-bar">
+        <div class="s-field">ЦЕЛЬ: <input type="number" id="goalMoney" onchange="saveCfg()"></div>
+        <div class="s-field">ПЛАН/ДЕНЬ: <input type="number" id="goalDaily" onchange="saveCfg()"></div>
+        <div class="s-field" style="margin-left:auto;">ПЕРИОД: <input type="month" id="filterMonth" onchange="render()"></div>
+        <button onclick="sync()" class="btn-main" style="padding: 5px 15px; font-size: 10px; border-radius: 8px;">ОБНОВИТЬ</button>
+    </div>
+
+    <div class="top-dash">
+        <div class="glass">
+            <div class="inc-label">Доход за месяц</div>
+            <div class="inc-val" id="valEarned">0 ₴</div>
+            <div class="prog-bar-bg"><div class="prog-fill" id="progressBar"></div></div>
+            <div style="display:flex; justify-content:space-between; font-size:10px; margin-top:10px;">
+                <span id="percentText">0%</span>
+                <span id="remainText" style="opacity:0.5">осталось 0 ₴</span>
+            </div>
+            <div class="inc-label" style="margin-top:20px;">По проектам</div>
+            <div class="stat-scroll" id="projectStats"></div>
+        </div>
+
+        <div class="glass" style="text-align: center;">
+            <div class="inc-label">Активность</div>
+            <div class="cal-grid" id="calendar"></div>
+            <div class="graph-container"><canvas id="paymentChart"></canvas></div>
+        </div>
+
+        <div class="glass">
+            <div class="inc-label">Доходы по месяцам</div>
+            <div class="stat-scroll" id="yearStats"></div>
+        </div>
+    </div>
+
+    <div class="glass form-row" style="grid-template-columns: repeat(3, 1fr); text-align: center; padding: 15px;">
+        <div>
+            <div class="inc-label">Средний чек</div>
+            <div id="avgCheck" style="font-size: 22px; font-weight: 900; color: var(--success);">0 ₴</div>
+        </div>
+        <div>
+            <div class="inc-label">Средне в день</div>
+            <div id="avgDay" style="font-size: 22px; font-weight: 900; color: var(--accent);">0 ₴</div>
+        </div>
+        <div>
+            <div class="inc-label">Прогноз на месяц</div>
+            <div id="forecast" style="font-size: 22px; font-weight: 900; color: #a855f7; text-shadow: 0 0 10px rgba(168, 85, 247, 0.3);">0 ₴</div>
+        </div>
+    </div>
+
+    <form class="glass form-row" id="addForm">
+        <input type="hidden" id="fId">
+        <input type="date" id="fDate" required>
+        <input type="number" id="fAmount" placeholder="Сумма" required>
+        <select id="fProject">
+            <option>Крипта</option><option>Товарка НЕЛЯ</option><option>Товарка 2.0</option><option>Ютуб</option><option>Другое</option>
+        </select>
+        <input type="text" id="fComment" placeholder="Инфо">
+        <button type="submit" class="btn-main" id="btnLabel">ЗАФИКСИРОВАТЬ</button>
+    </form>
+
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr><th>ДАТА</th><th>ПРОЕКТ</th><th>ОПЛАТА</th><th>6%</th><th>ИНФО</th><th style="text-align:right">УПР.</th></tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbzAPWeQsJjVhk2Ea2-L-3BywXBnbOYlBEEH82xlStf8--oZMgxSmNGtApRH-FKmt4Gq/exec";
+    const DB_KEY = 'nexus_v7_db';
+    let db = JSON.parse(localStorage.getItem(DB_KEY)) || [];
+    let isSaving = false;
+    let deletedIds = new Set(); 
+    let myChart = null;
+
+    function saveCfg() {
+        localStorage.setItem('v7_goal_m', document.getElementById('goalMoney').value);
+        localStorage.setItem('v7_goal_d', document.getElementById('goalDaily').value);
+        render();
+    }
+
+    async function sync() {
+        if (isSaving) return;
+        const bar = document.getElementById('sync-bar');
+        bar.style.width = '30%';
+        try {
+            const res = await fetch(API_URL + "?t=" + Date.now());
+            const data = await res.json();
+            if (Array.isArray(data)) {
+                const filteredData = data.filter(item => !deletedIds.has(String(item.ID).replace(/'/g, "").trim()));
+                db = filteredData;
+                localStorage.setItem(DB_KEY, JSON.stringify(db));
+            }
+        } catch(e) {}
+        bar.style.width = '100%';
+        render();
+        setTimeout(() => bar.style.width = '0%', 500);
+    }
+
+    function render() {
+        const monthFilter = document.getElementById('filterMonth').value;
+        const gM = parseInt(document.getElementById('goalMoney').value) || 60000;
+        const gD = parseInt(document.getElementById('goalDaily').value) || 2;
+        const filtered = db.filter(i => i["Дата"] && String(i["Дата"]).startsWith(monthFilter));
+        
+        let earned = 0;
+        let dayStats = {};
+        let projectSums = {};
+        let monthSums = {};
+
+        db.forEach(i => {
+            const val = parseFloat(i["Заработок"]) || 0;
+            const dStr = String(i["Дата"]);
+            const mKey = dStr.substring(0, 7);
+            if (dStr.startsWith(monthFilter.substring(0,4))) monthSums[mKey] = (monthSums[mKey] || 0) + val;
+            if (dStr.startsWith(monthFilter)) {
+                earned += val;
+                let day = new Date(i["Дата"]).getDate();
+                dayStats[day] = (dayStats[day] || 0) + 1;
+                let p = i["Проект"] || "Другое";
+                projectSums[p] = (projectSums[p] || 0) + val;
+            }
+        });
+
+        document.getElementById('valEarned').innerText = Math.round(earned).toLocaleString() + ' ₴';
+        const percent = Math.min(Math.round((earned / gM) * 100), 100);
+        document.getElementById('progressBar').style.width = percent + '%';
+        document.getElementById('percentText').innerText = percent + '%';
+        document.getElementById('remainText').innerText = `осталось ${Math.max(0, gM - Math.round(earned)).toLocaleString()} ₴`;
+
+        const pList = document.getElementById('projectStats'); pList.innerHTML = '';
+        Object.entries(projectSums).sort((a,b) => b[1]-a[1]).forEach(([n, s]) => {
+            pList.innerHTML += `<div class="stat-item"><span>${n}</span><span>${Math.round(s)}</span></div>`;
+        });
+
+        const cal = document.getElementById('calendar'); cal.innerHTML = '';
+        const parts = monthFilter.split('-');
+        const daysInMonth = new Date(parts[0], parts[1], 0).getDate();
+        for(let i=1; i<=daysInMonth; i++) {
+            const count = dayStats[i] || 0;
+            let cls = count >= gD ? 'target-met' : (count > 0 ? 'has-pay' : '');
+            cal.innerHTML += `<div class="day ${cls}"><span>${i}</span>${count > 0 ? `<span style="font-size: 8px; font-weight: 900; opacity: 0.8;">${count}</span>` : ''}</div>`;
+        }
+
+        const totalOps = filtered.length;
+        const now = new Date();
+        const isCurrentMonth = monthFilter === now.toISOString().substring(0, 7);
+        let daysToCount = isCurrentMonth ? now.getDate() : daysInMonth;
+        const avgCheckVal = totalOps > 0 ? Math.round(earned / totalOps) : 0;
+        const avgDayVal = Math.round(earned / daysToCount);
+        const forecastVal = avgDayVal * daysInMonth;
+        document.getElementById('avgCheck').innerText = avgCheckVal.toLocaleString() + ' ₴';
+        document.getElementById('avgDay').innerText = avgDayVal.toLocaleString() + ' ₴';
+        document.getElementById('forecast').innerText = forecastVal.toLocaleString() + ' ₴';
+
+        const yList = document.getElementById('yearStats'); yList.innerHTML = '';
+        Object.keys(monthSums).sort().reverse().forEach(m => {
+            const mName = new Date(m + '-01').toLocaleString('ru', {month: 'long'});
+            yList.innerHTML += `<div class="stat-item"><span>${mName}</span><span>${Math.round(monthSums[m]).toLocaleString()}</span></div>`;
+        });
+
+        // --- СОРТИРОВКА: НОВЫЕ СВЕРХУ ---
+        const tbody = document.getElementById('tableBody'); tbody.innerHTML = '';
+        filtered.sort((a,b) => {
+            // Сначала по дате (от большей к меньшей)
+            const dateCompare = new Date(b["Дата"]) - new Date(a["Дата"]);
+            if (dateCompare !== 0) return dateCompare;
+            // Если дата одна — по ID (последние созданные выше)
+            return String(b.ID).localeCompare(String(a.ID));
+        }).forEach(i => {
+            tbody.innerHTML += `<tr>
+                <td style="font-weight:900">${new Date(i["Дата"]).getDate()}</td>
+                <td>${i["Проект"]}</td>
+                <td>${Math.round(i["Сумма"]).toLocaleString()}</td>
+                <td style="color:var(--success); font-weight:900">${Math.round(i["Заработок"])}</td>
+                <td style="opacity:0.5; font-size:11px">${i["Комментарий"] || ''}</td>
+                <td style="text-align:right">
+                    <button class="btn-tool" onclick="editE('${i.ID}')">✏️</button>
+                    <button class="btn-tool" style="color:var(--danger)" onclick="delE('${i.ID}')">🗑️</button>
+                </td>
+            </tr>`;
+        });
+
+        updateChart(daysInMonth, dayStats);
+    }
+
+    function updateChart(daysCount, dayStats) {
+        const ctx = document.getElementById('paymentChart').getContext('2d');
+        const labels = Array.from({length: daysCount}, (_, i) => i + 1);
+        const data = labels.map(day => dayStats[day] || 0);
+        const gradient = ctx.createLinearGradient(0, 0, 0, 150);
+        gradient.addColorStop(0, 'rgba(59, 130, 246, 0.4)'); gradient.addColorStop(1, 'rgba(59, 130, 246, 0)');  
+        if (myChart) {
+            myChart.data.labels = labels; myChart.data.datasets[0].data = data; myChart.update('none');
+        } else {
+            myChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{ label: 'Оплат', data: data, borderColor: '#3b82f6', borderWidth: 2, fill: true, backgroundColor: gradient, tension: 0.4, pointRadius: 0 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { color: 'rgba(226, 232, 240, 0.3)', font: { size: 9 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 15 } }, y: { grid: { color: 'rgba(255, 255, 255, 0.03)' }, beginAtZero: true, ticks: { color: 'rgba(226, 232, 240, 0.3)', font: { size: 9 }, stepSize: 1 } } } }
+            });
+        }
+    }
+
+    async function delE(id) {
+        if(!confirm("Удалить?")) return;
+        const sId = String(id).replace(/'/g, "").trim();
+        isSaving = true; deletedIds.add(sId); 
+        db = db.filter(i => String(i.ID).replace(/'/g, "").trim() !== sId);
+        localStorage.setItem(DB_KEY, JSON.stringify(db)); render();
+        try { await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'DELETE', id: sId }) }); } catch(e) {}
+        setTimeout(() => { isSaving = false; sync(); setTimeout(() => deletedIds.delete(sId), 10000); }, 7000);
+    }
+
+    function editE(id) {
+        const item = db.find(i => String(i.ID) === String(id));
+        if(!item) return;
+        document.getElementById('fId').value = item.ID;
+        document.getElementById('fDate').value = item["Дата"];
+        document.getElementById('fAmount').value = item["Сумма"];
+        document.getElementById('fProject').value = item["Проект"];
+        document.getElementById('fComment').value = item["Комментарий"] || '';
+        document.getElementById('btnLabel').innerText = "ОБНОВИТЬ";
+        window.scrollTo({top: 0, behavior: 'smooth'});
+    }
+
+    document.getElementById('addForm').onsubmit = async (e) => {
+        e.preventDefault(); isSaving = true;
+        const id = document.getElementById('fId').value || "ID_" + Date.now();
+        const entry = {
+            id: id, date: document.getElementById('fDate').value, amount: document.getElementById('fAmount').value,
+            project: document.getElementById('fProject').value, earnings: (document.getElementById('fAmount').value * 0.06).toFixed(0),
+            comment: document.getElementById('fComment').value, action: document.getElementById('fId').value ? 'EDIT' : 'ADD'
+        };
+        if(entry.action === 'EDIT') db = db.filter(i => String(i.ID) !== String(id));
+        db.push({"ID": id, "Дата": entry.date, "Сумма": entry.amount, "Проект": entry.project, "Заработок": entry.earnings, "Комментарий": entry.comment});
+        localStorage.setItem(DB_KEY, JSON.stringify(db)); render();
+        await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(entry) });
+        e.target.reset(); document.getElementById('fId').value = ''; document.getElementById('btnLabel').innerText = "ЗАФИКСИРОВАТЬ";
+        document.getElementById('fDate').value = new Date().toISOString().split('T')[0];
+        setTimeout(() => { isSaving = false; sync(); }, 4000);
+    };
+
+    const now = new Date();
+    document.getElementById('filterMonth').value = now.toISOString().substring(0, 7);
+    document.getElementById('fDate').value = now.toISOString().split('T')[0];
+    document.getElementById('goalMoney').value = localStorage.getItem('v7_goal_m') || 60000;
+    document.getElementById('goalDaily').value = localStorage.getItem('v7_goal_d') || 2;
+    render(); sync();
+</script>
+</body>
+</html>
