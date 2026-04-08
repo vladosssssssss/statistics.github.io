@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Nexus OS v7.8 | Top-Down History</title>
+    <title>My personal statistics</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
@@ -23,7 +23,21 @@
 
         .settings-bar { display: flex; gap: 15px; align-items: center; padding: 10px 20px; background: var(--panel); border-radius: 15px; border: 1px solid var(--border); backdrop-filter: blur(10px); }
         .s-field { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 800; color: var(--accent); }
-        .s-field input { background: rgba(0,0,0,0.3); border: 1px solid var(--border); color: #fff; padding: 6px 10px; border-radius: 8px; width: 150px; outline: none; }
+        .s-field input { background: rgba(0,0,0,0.3); border: 1px solid var(--border); color: #fff; padding: 6px 10px; border-radius: 8px; width: 120px; outline: none; }
+
+        /* ЦЕНТРАЛЬНЫЙ БЛОК ОСТАТКА */
+        .header-balance-info {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-left: 1px solid var(--border);
+            border-right: 1px solid var(--border);
+            margin: 0 10px;
+        }
+        .hb-label { font-size: 9px; font-weight: 900; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; }
+        #hb-val { font-size: 20px; font-weight: 900; color: #fbbf24; text-shadow: 0 0 10px rgba(251, 191, 36, 0.3); }
 
         .top-dash { display: grid; grid-template-columns: 320px 1fr 300px; gap: 15px; }
         .glass { background: var(--panel); backdrop-filter: blur(20px); border: 1px solid var(--border); border-radius: 20px; padding: 20px; }
@@ -69,9 +83,14 @@
 
         #sync-bar { position: fixed; top: 0; left: 0; width: 0%; height: 3px; background: var(--success); z-index: 1000; transition: 0.5s; }
 
+        .payout-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-top: 15px; }
+        .payout-card { background: rgba(0,0,0,0.2); padding: 10px; border-radius: 12px; border: 1px solid var(--border); }
+        .payout-card input { width: 100%; font-size: 12px; padding: 8px; margin-top: 5px; border-color: rgba(255,255,255,0.05); }
+
         @media screen and (max-width: 768px) {
             body { padding: 8px; }
             .settings-bar { display: grid; grid-template-columns: 1fr 1fr; padding: 12px; gap: 8px; }
+            .header-balance-info { grid-column: span 2; border: none; border-top: 1px solid var(--border); padding-top: 10px; margin: 5px 0; }
             .settings-bar .s-field:nth-child(3) { margin-left: 0 !important; } 
             .s-field input { width: 100%; padding: 8px; }
             .settings-bar .btn-main { font-size: 9px; padding: 12px 5px; margin-left: 0 !important; }
@@ -80,14 +99,6 @@
             .inc-val { font-size: 26px; }
             .cal-grid { grid-template-columns: repeat(7, 1fr); gap: 4px; }
             .day { border-radius: 6px; font-size: 10px; padding: 4px 0; }
-            .form-row[style*="repeat(3, 1fr)"] { grid-template-columns: 1fr 1fr !important; }
-            .form-row[style*="repeat(3, 1fr)"] > div:last-child { grid-column: span 2; }
-            #addForm { grid-template-columns: 1fr 1fr; gap: 8px; }
-            #fComment { grid-column: span 2; }
-            #btnLabel { grid-column: span 2; padding: 15px; font-size: 13px; }
-            .table-wrap { border-radius: 12px; }
-            td, th { padding: 10px 4px; font-size: 11px; }
-            th:nth-child(5), td:nth-child(5) { display: none; }
         }
     </style>
 </head>
@@ -99,6 +110,12 @@
     <div class="settings-bar">
         <div class="s-field">ЦЕЛЬ: <input type="number" id="goalMoney" onchange="saveCfg()"></div>
         <div class="s-field">ПЛАН/ДЕНЬ: <input type="number" id="goalDaily" onchange="saveCfg()"></div>
+        
+        <div class="header-balance-info">
+            <span class="hb-label">Текущий остаток</span>
+            <div id="hb-val">0 ₴</div>
+        </div>
+
         <div class="s-field" style="margin-left: auto;">ПЕРИОД: <input type="month" id="filterMonth" onchange="render()"></div>
         <button onclick="sync()" class="btn-main" style="padding: 10px 15px; font-size: 10px; border-radius: 8px;">ОБНОВИТЬ</button>
     </div>
@@ -162,6 +179,73 @@
             <tbody id="tableBody"></tbody>
         </table>
     </div>
+
+    <div class="glass">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div class="inc-label">УПРАВЛЕНИЕ ВЫПЛАТАМИ</div>
+            <div style="text-align: right;">
+                <div class="inc-label" style="color: #fff; margin-bottom: 0;">ОСТАТОК К ВЫПЛАТЕ:</div>
+                <div id="salaryRemainder" style="font-size: 24px; font-weight: 900; color: #fbbf24; text-shadow: 0 0 15px rgba(251, 191, 36, 0.3);">0 ₴</div>
+            </div>
+        </div>
+        
+        <div class="payout-grid">
+            <div class="payout-card">
+                <div class="inc-label" style="color: var(--success);">+ Ожидаю сумму</div>
+                <input type="number" id="payPlus" placeholder="0">
+                <button class="btn-main" style="width:100%; font-size:10px; background:var(--success); margin-top:5px;" onclick="addTransaction('Ожидание (приход)', 'payPlus', true)">В ПЛЮС</button>
+            </div>
+            <div class="payout-card">
+                <div class="inc-label" style="color: #8b5cf6;">Крипта</div>
+                <input type="number" id="payCrypto" placeholder="0">
+                <button class="btn-main" style="width:100%; font-size:10px; margin-top:5px;" onclick="addTransaction('Выплата: Крипта', 'payCrypto', false)">ВЫПЛАТИТЬ</button>
+            </div>
+            <div class="payout-card">
+                <div class="inc-label" style="color: #10b981;">НЕЛЯ</div>
+                <input type="number" id="payNelya" placeholder="0">
+                <button class="btn-main" style="width:100%; font-size:10px; margin-top:5px;" onclick="addTransaction('Выплата: Товарка НЕЛЯ', 'payNelya', false)">ВЫПЛАТИТЬ</button>
+            </div>
+            <div class="payout-card">
+                <div class="inc-label" style="color: #3b82f6;">Товарка 2.0</div>
+                <input type="number" id="pay2" placeholder="0">
+                <button class="btn-main" style="width:100%; font-size:10px; margin-top:5px;" onclick="addTransaction('Выплата: Товарка 2.0', 'pay2', false)">ВЫПЛАТИТЬ</button>
+            </div>
+            <div class="payout-card">
+                <div class="inc-label" style="color: #f59e0b;">Другое</div>
+                <input type="number" id="payOther" placeholder="0">
+                <button class="btn-main" style="width:100%; font-size:10px; margin-top:5px;" onclick="addTransaction('Выплата: Другое', 'payOther', false)">ВЫПЛАТИТЬ</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-wrap" style="max-height: 350px; max-width: 99%;">
+<style>
+.table-wrap { max-height: 350px; max-width: 99%; }
+
+@media screen and (max-width: 768px) {
+.table-wrap { max-height: 250px; max-width: 97%; }
+
+.table-wrap input,
+.table-wrap select,
+.table-wrap textarea {
+    font-size: 14px;
+    padding: 6px;
+}
+
+.table-wrap td,
+.table-wrap th {
+    padding: 6px;
+    font-size: 13px;
+}
+}
+</style>
+        <table>
+            <thead>
+                <tr><th>ДАТА</th><th>ТИП ОПЕРАЦИИ</th><th>СУММА</th><th>ИНФО</th><th style="text-align:right">УПР.</th></tr>
+            </thead>
+            <tbody id="tableBodyPayouts"></tbody>
+        </table>
+    </div>
 </div>
 
 <script>
@@ -196,13 +280,33 @@
         setTimeout(() => bar.style.width = '0%', 500);
     }
 
+    async function addTransaction(proj, inputId, isPlus) {
+        const val = document.getElementById(inputId).value;
+        if(!val || val <= 0) return;
+        isSaving = true;
+        const amount = isPlus ? Math.abs(val) : -Math.abs(val);
+        const entry = {
+            id: "PAY_" + Date.now(), date: new Date().toISOString().split('T')[0],
+            amount: 0, project: proj, earnings: amount,
+            comment: isPlus ? "Ожидаемый приход" : "Списание с баланса", action: 'ADD'
+        };
+        db.push({"ID": entry.id, "Дата": entry.date, "Сумма": 0, "Проект": entry.project, "Заработок": entry.earnings, "Комментарий": entry.comment});
+        localStorage.setItem(DB_KEY, JSON.stringify(db));
+        render();
+        document.getElementById(inputId).value = '';
+        await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(entry) });
+        setTimeout(() => { isSaving = false; sync(); }, 2000);
+    }
+
     function render() {
         const monthFilter = document.getElementById('filterMonth').value;
         const gM = parseInt(document.getElementById('goalMoney').value) || 60000;
         const gD = parseInt(document.getElementById('goalDaily').value) || 2;
-        const filtered = db.filter(i => i["Дата"] && String(i["Дата"]).startsWith(monthFilter));
+        
+        const filtered = db.filter(i => i["Дата"] && String(i["Дата"]).startsWith(monthFilter) && !(String(i["Проект"]).startsWith("Выплата") || String(i["Проект"]).startsWith("Ожидание")));
         
         let earned = 0;
+        let totalBalance = 0; 
         let dayStats = {};
         let projectSums = {};
         let monthSums = {};
@@ -211,15 +315,26 @@
             const val = parseFloat(i["Заработок"]) || 0;
             const dStr = String(i["Дата"]);
             const mKey = dStr.substring(0, 7);
-            if (dStr.startsWith(monthFilter.substring(0,4))) monthSums[mKey] = (monthSums[mKey] || 0) + val;
-            if (dStr.startsWith(monthFilter)) {
-                earned += val;
-                let day = new Date(i["Дата"]).getDate();
-                dayStats[day] = (dayStats[day] || 0) + 1;
-                let p = i["Проект"] || "Другое";
-                projectSums[p] = (projectSums[p] || 0) + val;
+            const proj = String(i["Проект"] || "Другое");
+            const isTypePay = proj.startsWith("Выплата") || proj.startsWith("Ожидание");
+
+            totalBalance += val;
+
+            if (!isTypePay) {
+                if (dStr.startsWith(monthFilter.substring(0,4))) monthSums[mKey] = (monthSums[mKey] || 0) + val;
+                if (dStr.startsWith(monthFilter)) {
+                    earned += val;
+                    let day = new Date(i["Дата"]).getDate();
+                    dayStats[day] = (dayStats[day] || 0) + 1;
+                    projectSums[proj] = (projectSums[proj] || 0) + val;
+                }
             }
         });
+
+        // ОБНОВЛЯЕМ ОСТАТОК В ДВУХ МЕСТАХ
+        const formattedBalance = Math.round(totalBalance).toLocaleString() + ' ₴';
+        document.getElementById('hb-val').innerText = formattedBalance; // Наверху
+        document.getElementById('salaryRemainder').innerText = formattedBalance; // Внизу
 
         document.getElementById('valEarned').innerText = Math.round(earned).toLocaleString() + ' ₴';
         const percent = Math.min(Math.round((earned / gM) * 100), 100);
@@ -246,9 +361,8 @@
         const isCurrentMonth = monthFilter === now.toISOString().substring(0, 7);
         let daysToCount = isCurrentMonth ? now.getDate() : daysInMonth;
 
-        // РАСЧЕТЫ ДЛЯ ТРЕХ ПАНЕЛЕЙ
         const avgCheckVal = totalOps > 0 ? Math.round(earned / totalOps) : 0;
-        const avgCountVal = (totalOps / daysToCount).toFixed(1); // Среднее кол-во оплат (1.3)
+        const avgCountVal = (totalOps / daysToCount).toFixed(1); 
         const avgDayMoney = Math.round(earned / daysToCount);
         const forecastVal = avgDayMoney * daysInMonth;
 
@@ -263,11 +377,7 @@
         });
 
         const tbody = document.getElementById('tableBody'); tbody.innerHTML = '';
-        filtered.sort((a,b) => {
-            const dateCompare = new Date(b["Дата"]) - new Date(a["Дата"]);
-            if (dateCompare !== 0) return dateCompare;
-            return String(b.ID).localeCompare(String(a.ID));
-        }).forEach(i => {
+        filtered.sort((a,b) => new Date(b["Дата"]) - new Date(a["Дата"])).forEach(i => {
             tbody.innerHTML += `<tr>
                 <td style="font-weight:900">${new Date(i["Дата"]).getDate()}</td>
                 <td>${i["Проект"]}</td>
@@ -280,6 +390,21 @@
                 </td>
             </tr>`;
         });
+
+        const tbodyPay = document.getElementById('tableBodyPayouts'); tbodyPay.innerHTML = '';
+        db.filter(i => String(i["Проект"]).startsWith("Выплата") || String(i["Проект"]).startsWith("Ожидание"))
+          .sort((a,b) => new Date(b["Дата"]) - new Date(a["Дата"]))
+          .forEach(i => {
+              const val = parseFloat(i["Заработок"]) || 0;
+              const color = val > 0 ? 'var(--success)' : 'var(--danger)';
+              tbodyPay.innerHTML += `<tr>
+                  <td>${new Date(i["Дата"]).toLocaleDateString()}</td>
+                  <td style="font-weight:800; color:${color}">${i["Проект"]}</td>
+                  <td style="font-weight:900; color:${color}">${val > 0 ? '+' : ''}${Math.round(val)}</td>
+                  <td style="opacity:0.5; font-size:11px">${i["Комментарий"] || ''}</td>
+                  <td style="text-align:right"><button class="btn-tool" style="color:var(--danger)" onclick="delE('${i.ID}')">🗑️</button></td>
+              </tr>`;
+          });
 
         updateChart(daysInMonth, dayStats);
     }
