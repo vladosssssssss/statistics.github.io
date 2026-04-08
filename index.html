@@ -2,7 +2,9 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Nexus OS v7.8 | Top-Down History</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -15,7 +17,7 @@
             --text: #e2e8f0;
             --border: rgba(255, 255, 255, 0.08);
         }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
         body { background: var(--bg); color: var(--text); padding: 15px; min-height: 100vh; background-image: radial-gradient(circle at top right, #111827, #05070a); }
         .container { width: 100%; max-width: 1400px; margin: 0 auto; display: flex; flex-direction: column; gap: 15px; }
 
@@ -63,6 +65,55 @@
         .btn-tool:hover { opacity: 1; transform: scale(1.1); }
 
         #sync-bar { position: fixed; top: 0; left: 0; width: 0%; height: 3px; background: var(--success); z-index: 1000; transition: 0.5s; }
+
+        /* --- ИСПРАВЛЕННАЯ АДАПТАЦИЯ ДЛЯ ТЕЛЕФОНОВ --- */
+        @media screen and (max-width: 768px) {
+            body { padding: 8px; }
+            .container { gap: 10px; }
+
+            /* Настройки: теперь в 2 колонки и по центру */
+            .settings-bar { 
+                display: grid; 
+                grid-template-columns: 1fr 1fr; 
+                padding: 12px; 
+                gap: 8px; 
+            }
+            .settings-bar .s-field:nth-child(3) { margin-left: 0; } /* Убираем margin-left: auto */
+            .s-field input { width: 100%; padding: 8px; }
+            .settings-bar .btn-main { font-size: 9px; padding: 12px 5px; }
+
+            /* Дашборд: строго в один ряд */
+            .top-dash { grid-template-columns: 1fr; gap: 10px; }
+            .glass { padding: 15px; border-radius: 15px; }
+            .inc-val { font-size: 26px; }
+
+            /* Календарь: ровная сетка 7 колонок без разрывов */
+            .cal-grid { 
+                grid-template-columns: repeat(7, 1fr); 
+                gap: 4px; 
+            }
+            .day { border-radius: 6px; font-size: 10px; padding: 4px 0; }
+
+            /* Плашки среднего чека/прогноза */
+            .form-row[style*="repeat(3, 1fr)"] { 
+                grid-template-columns: 1fr 1fr !important; 
+            }
+            .form-row[style*="repeat(3, 1fr)"] > div:last-child { grid-column: span 2; }
+
+            /* Форма ввода: плитка для удобства */
+            #addForm { 
+                grid-template-columns: 1fr 1fr; 
+                gap: 8px; 
+            }
+            #fComment { grid-column: span 2; }
+            #btnLabel { grid-column: span 2; padding: 15px; font-size: 13px; }
+
+            /* Таблица: скрываем лишнее, уменьшаем текст */
+            .table-wrap { border-radius: 12px; }
+            td, th { padding: 10px 4px; font-size: 11px; }
+            th:nth-child(5), td:nth-child(5) { display: none; } /* Инфо скрыто */
+            th:nth-child(2), td:nth-child(2) { max-width: 65px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        }
     </style>
 </head>
 <body>
@@ -73,8 +124,8 @@
     <div class="settings-bar">
         <div class="s-field">ЦЕЛЬ: <input type="number" id="goalMoney" onchange="saveCfg()"></div>
         <div class="s-field">ПЛАН/ДЕНЬ: <input type="number" id="goalDaily" onchange="saveCfg()"></div>
-        <div class="s-field" style="margin-left:auto;">ПЕРИОД: <input type="month" id="filterMonth" onchange="render()"></div>
-        <button onclick="sync()" class="btn-main" style="padding: 5px 15px; font-size: 10px; border-radius: 8px;">ОБНОВИТЬ</button>
+        <div class="s-field">ПЕРИОД: <input type="month" id="filterMonth" onchange="render()"></div>
+        <button onclick="sync()" class="btn-main">ОБНОВИТЬ</button>
     </div>
 
     <div class="top-dash">
@@ -232,13 +283,10 @@
             yList.innerHTML += `<div class="stat-item"><span>${mName}</span><span>${Math.round(monthSums[m]).toLocaleString()}</span></div>`;
         });
 
-        // --- СОРТИРОВКА: НОВЫЕ СВЕРХУ ---
         const tbody = document.getElementById('tableBody'); tbody.innerHTML = '';
         filtered.sort((a,b) => {
-            // Сначала по дате (от большей к меньшей)
             const dateCompare = new Date(b["Дата"]) - new Date(a["Дата"]);
             if (dateCompare !== 0) return dateCompare;
-            // Если дата одна — по ID (последние созданные выше)
             return String(b.ID).localeCompare(String(a.ID));
         }).forEach(i => {
             tbody.innerHTML += `<tr>
@@ -284,7 +332,7 @@
         db = db.filter(i => String(i.ID).replace(/'/g, "").trim() !== sId);
         localStorage.setItem(DB_KEY, JSON.stringify(db)); render();
         try { await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'DELETE', id: sId }) }); } catch(e) {}
-        setTimeout(() => { isSaving = false; sync(); setTimeout(() => deletedIds.delete(sId), 10000); }, 7000);
+        setTimeout(() => { isSaving = false; sync(); }, 7000);
     }
 
     function editE(id) {
