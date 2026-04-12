@@ -78,7 +78,7 @@
         .btn-main { background: var(--accent); border: none; font-weight: 900; cursor: pointer; transition: 0.3s; }
         .btn-main:hover { filter: brightness(1.2); }
 
-        .table-wrap { max-height: 450px; overflow-y: auto; border-radius: 20px; border: 1px solid var(--border); background: var(--panel); }
+        .table-wrap { max-height: 300px; overflow-y: auto; border-radius: 20px; border: 1px solid var(--border); background: var(--panel); }
         table { width: 100%; border-collapse: collapse; }
         th { position: sticky; top: 0; background: #0b111d; text-align: left; padding: 12px; font-size: 10px; color: var(--accent); border-bottom: 1px solid var(--border); z-index: 5; }
         td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 13px; }
@@ -105,6 +105,14 @@
             .inc-val { font-size: 26px; }
             .cal-grid { grid-template-columns: repeat(7, 1fr); gap: 4px; }
         }
+        input[type="month"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    cursor: pointer;
+}
+input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    cursor: pointer;
+}
     </style>
 </head>
 <body>
@@ -352,7 +360,7 @@
 
         const pList = document.getElementById('projectStats'); pList.innerHTML = '';
         Object.entries(projectSums).sort((a,b) => b[1]-a[1]).forEach(([n, s]) => {
-            pList.innerHTML += `<div class="stat-item"><span>${n}</span><span>${Math.round(s)}</span></div>`;
+            pList.innerHTML += `<div class="stat-item"><span>${n}</span><span>${Math.round(s)} ₴</span></div>`;
         });
 
         const parts = monthFilter.split('-');
@@ -378,7 +386,7 @@
         const yList = document.getElementById('yearStats'); yList.innerHTML = '';
         Object.keys(monthSums).sort().reverse().forEach(m => {
             const mName = new Date(m + '-01').toLocaleString('ru', {month: 'long'});
-            yList.innerHTML += `<div class="stat-item"><span>${mName}</span><span>${Math.round(monthSums[m]).toLocaleString()}</span></div>`;
+            yList.innerHTML += `<div class="stat-item"><span>${mName}</span><span>${Math.round(monthSums[m]).toLocaleString()} ₴</span></div>`;
         });
 
         const tbody = document.getElementById('tableBody'); tbody.innerHTML = '';
@@ -387,7 +395,9 @@
             const proj = String(i["Проект"]);
             return itemMonth === monthFilter && !proj.startsWith("Выплата") && !proj.startsWith("Ожидание");
         }).sort((a,b) => new Date(b["Дата"]) - new Date(a["Дата"])).forEach(i => {
-            tbody.innerHTML += `<tr><td style="font-weight:900">${new Date(i["Дата"]).getDate()}</td><td>${i["Проект"]}</td><td>${Math.round(i["Сумма"]).toLocaleString()}</td><td style="color:var(--success); font-weight:900">${Math.round(i["Заработок"])}</td><td style="opacity:0.5; font-size:11px">${i["Комментарий"] || ''}</td><td style="text-align:right"><button class="btn-tool" onclick="editE('${i.ID}')">✏️</button><button class="btn-tool" style="color:var(--danger)" onclick="delE('${i.ID}')">🗑️</button></td></tr>`;
+            const d = new Date(i["Дата"]);
+            const dateStr = String(d.getDate()).padStart(2, '0') + '.' + String(d.getMonth() + 1).padStart(2, '0');
+            tbody.innerHTML += `<tr><td style="font-weight:900">${dateStr}</td><td>${i["Проект"]}</td><td>${Math.round(i["Сумма"]).toLocaleString()} ₴</td><td style="color:var(--success); font-weight:900">${Math.round(i["Заработок"])} ₴</td><td style="opacity:0.5; font-size:11px">${i["Комментарий"] || ''}</td><td style="text-align:right"><button class="btn-tool" onclick="editE('${i.ID}')">✏️</button><button class="btn-tool" style="color:var(--danger)" onclick="delE('${i.ID}')">🗑️</button></td></tr>`;
         });
 
         const tbodyPay = document.getElementById('tableBodyPayouts'); tbodyPay.innerHTML = '';
@@ -398,7 +408,9 @@
         }).sort((a,b) => new Date(b["Дата"]) - new Date(a["Дата"])).forEach(i => {
               const val = parseFloat(i["Заработок"]) || 0;
               const color = val > 0 ? 'var(--success)' : 'var(--danger)';
-              tbodyPay.innerHTML += `<tr><td>${new Date(i["Дата"]).getDate()} число</td><td style="font-weight:800; color:${color}">${i["Проект"]}</td><td style="font-weight:900; color:${color}">${val > 0 ? '+' : ''}${Math.round(val)}</td><td style="opacity:0.5; font-size:11px">${i["Комментарий"] || ''}</td><td style="text-align:right"><button class="btn-tool" style="color:var(--danger)" onclick="delE('${i.ID}')">🗑️</button></td></tr>`;
+              const d = new Date(i["Дата"]);
+              const dateStr = String(d.getDate()).padStart(2, '0') + '.' + String(d.getMonth() + 1).padStart(2, '0');
+              tbodyPay.innerHTML += `<tr><td>${dateStr}</td><td style="font-weight:800; color:${color}">${i["Проект"]}</td><td style="font-weight:900; color:${color}">${val > 0 ? '+' : ''}${Math.round(val)} ₴</td><td style="opacity:0.5; font-size:11px">${i["Комментарий"] || ''}</td><td style="text-align:right"><button class="btn-tool" style="color:var(--danger)" onclick="delE('${i.ID}')">🗑️</button></td></tr>`;
         });
 
         updateChart(daysInMonth, dayStats);
