@@ -18,52 +18,39 @@
             --danger: #ef4444;
             --text: #e2e8f0;
             --border: rgba(255, 255, 255, 0.08);
-            --scroll-thumb: rgba(59, 130, 246, 0.5); /* Синий для скролла */
+            --scroll-thumb: rgba(59, 130, 246, 0.5); 
             --scroll-track: rgba(0, 0, 0, 0.2);
         }
 
-        /* КАСТОМНЫЙ СКРОЛЛБАР */
-        ::-webkit-scrollbar {
-            width: 5px; /* Очень тонкий */
-            height: 5px;
-        }
-        ::-webkit-scrollbar-track {
-            background: var(--scroll-track);
-            border-radius: 10px;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: var(--scroll-thumb);
-            border-radius: 10px;
-            transition: 0.3s;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--accent);
-        }
-
-        /* Для Firefox */
-        * {
-            scrollbar-width: thin;
-            scrollbar-color: var(--scroll-thumb) var(--scroll-track);
-        }
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: var(--scroll-track); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: var(--scroll-thumb); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
         body { background: var(--bg); color: var(--text); padding: 15px; min-height: 100vh; background-image: radial-gradient(circle at top right, #111827, #05070a); }
         .container { width: 100%; max-width: 1400px; margin: 0 auto; display: flex; flex-direction: column; gap: 15px; }
 
+        #global-loader {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0, 0, 0, 0.15); backdrop-filter: blur(2px); 
+            display: none; justify-content: center; align-items: center; 
+            z-index: 10000;
+        }
+        .spinner {
+            width: 40px; height: 40px;
+            border: 4px solid rgba(59, 130, 246, 0.1);
+            border-left-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.3s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
         .settings-bar { display: flex; gap: 15px; align-items: center; padding: 10px 20px; background: var(--panel); border-radius: 15px; border: 1px solid var(--border); backdrop-filter: blur(10px); }
         .s-field { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 800; color: var(--accent); }
         .s-field input { background: rgba(0,0,0,0.3); border: 1px solid var(--border); color: #fff; padding: 6px 10px; border-radius: 8px; width: 140px; outline: none; }
 
-        .header-balance-info {
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            border-left: 1px solid var(--border);
-            border-right: 1px solid var(--border);
-            margin: 0 10px;
-        }
+        .header-balance-info { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-left: 1px solid var(--border); border-right: 1px solid var(--border); margin: 0 10px; }
         .hb-label { font-size: 9px; font-weight: 900; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; }
         #hb-val { font-size: 20px; font-weight: 900; color: #fbbf24; text-shadow: 0 0 10px rgba(251, 191, 36, 0.3); }
 
@@ -80,24 +67,14 @@
         .stat-item span:last-child { font-weight: 900; color: var(--success); }
 
         .cal-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(35px, 1fr)); gap: 6px; margin-top: 10px; }
-        .day { 
-            aspect-ratio: 1/1; border-radius: 10px; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border); 
-            display: flex; align-items: center; justify-content: center; font-size: 11px; color: rgba(255,255,255,0.2); 
-            transition: 0.3s; flex-direction: column; gap: 2px;
-        }
+        .day { aspect-ratio: 1/1; border-radius: 10px; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 11px; color: rgba(255,255,255,0.2); transition: 0.3s; flex-direction: column; gap: 2px; }
         .day.has-pay { background: rgba(59, 130, 246, 0.15); border-color: var(--accent); color: #fff; }
-        .day.target-met { 
-            background: rgba(16, 185, 129, 0.1); border: 2px solid var(--success); color: var(--success); 
-            box-shadow: 0 0 10px rgba(16, 185, 129, 0.2); font-weight: 900;
-        }
+        .day.target-met { background: rgba(16, 185, 129, 0.1); border: 2px solid var(--success); color: var(--success); box-shadow: 0 0 10px rgba(16, 185, 129, 0.2); font-weight: 900; }
 
         .graph-container { margin-top: 20px; width: 100%; height: 150px; border-radius: 15px; background: rgba(0,0,0,0.2); padding: 10px; border: 1px solid var(--border); }
-
         .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
         input, select, .btn-main { background: rgba(0,0,0,0.4); border: 1px solid var(--border); color: white; padding: 12px; border-radius: 12px; font-size: 14px; outline: none; }
         
-        input::-webkit-calendar-picker-indicator { filter: invert(1); }
-
         .btn-main { background: var(--accent); border: none; font-weight: 900; cursor: pointer; transition: 0.3s; }
         .btn-main:hover { filter: brightness(1.2); }
 
@@ -109,18 +86,21 @@
         .btn-tool { background: none; border: none; cursor: pointer; font-size: 16px; opacity: 0.5; transition: 0.2s; }
         .btn-tool:hover { opacity: 1; transform: scale(1.1); }
 
-        #sync-bar { position: fixed; top: 0; left: 0; width: 0%; height: 3px; background: var(--success); z-index: 1000; transition: 0.5s; }
+        #sync-bar { position: fixed; top: 0; left: 0; width: 0%; height: 3px; background: var(--success); z-index: 1000; transition: 0.3s; }
 
         .payout-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-top: 15px; }
-        .payout-card { background: rgba(0,0,0,0.2); padding: 10px; border-radius: 12px; border: 1px solid var(--border); }
+        .payout-card { background: rgba(0,0,0,0.2); padding: 10px; border-radius: 12px; border: 1px solid var(--border); position: relative; }
         .payout-card input { width: 100%; font-size: 12px; padding: 8px; margin-top: 5px; border-color: rgba(255,255,255,0.05); }
+
+        .btn-add-project { background: var(--success); color: white; border: none; border-radius: 50%; width: 24px; height: 24px; font-weight: 900; cursor: pointer; font-size: 16px; line-height: 1; }
+        .btn-del-project { position: absolute; top: 5px; right: 5px; background: none; border: none; color: var(--danger); font-size: 14px; cursor: pointer; font-weight: 900; opacity: 0.6; }
+        .btn-del-project:hover { opacity: 1; }
 
         @media screen and (max-width: 768px) {
             body { padding: 8px; }
             .settings-bar { display: grid; grid-template-columns: 1fr 1fr; padding: 12px; gap: 8px; }
             .header-balance-info { grid-column: span 2; border: none; border-top: 1px solid var(--border); padding-top: 10px; margin: 5px 0; }
-            .s-field input { width: 100%; padding: 8px; }
-            .settings-bar .btn-main { font-size: 9px; padding: 12px 5px; margin-left: 0 !important; }
+            .s-field input { width: 100%; }
             .top-dash { grid-template-columns: 1fr; gap: 10px; }
             .inc-val { font-size: 26px; }
             .cal-grid { grid-template-columns: repeat(7, 1fr); gap: 4px; }
@@ -130,6 +110,7 @@
 <body>
 
 <div id="sync-bar"></div>
+<div id="global-loader"><div class="spinner"></div></div>
 
 <div class="container">
     <div class="settings-bar">
@@ -165,7 +146,7 @@
         </div>
 
         <div class="glass">
-            <div class="inc-label">Доходы по месяцам</div>
+            <div class="inc-label">История по месяцам</div>
             <div class="stat-scroll" id="yearStats"></div>
         </div>
     </div>
@@ -193,77 +174,55 @@
         <input type="hidden" id="fId">
         <input type="date" id="fDate" required>
         <input type="number" id="fAmount" placeholder="Сумма" required>
-        <select id="fProject">
-            <option>Крипта</option><option>Товарка НЕЛЯ</option><option>Товарка 2.0</option><option>Ютуб</option><option>Другое</option>
-        </select>
+        <select id="fProject"></select>
         <input type="text" id="fComment" placeholder="Инфо">
         <button type="submit" class="btn-main" id="btnLabel">ЗАФИКСИРОВАТЬ</button>
     </form>
 
     <div class="table-wrap">
         <table>
-            <thead>
-                <tr><th>ДАТА</th><th>ПРОЕКТ</th><th>ОПЛАТА</th><th>6%</th><th>ИНФО</th><th style="text-align:right">УПР.</th></tr>
-            </thead>
+            <thead><tr><th>ДАТА</th><th>ПРОЕКТ</th><th>ОПЛАТА</th><th>6%</th><th>ИНФО</th><th style="text-align:right">УПР.</th></tr></thead>
             <tbody id="tableBody"></tbody>
         </table>
     </div>
 
     <div class="glass">
         <div style="display: flex; justify-content: space-between; align-items: center;">
-            <div class="inc-label">УПРАВЛЕНИЕ ВЫПЛАТАМИ</div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div class="inc-label">УПРАВЛЕНИЕ ВЫПЛАТАМИ</div>
+                <button onclick="addNewProject()" class="btn-add-project">+</button>
+            </div>
             <div style="text-align: right;">
                 <div class="inc-label" style="color: #fff; margin-bottom: 0;">ОСТАТОК К ВЫПЛАТЕ:</div>
                 <div id="salaryRemainder" style="font-size: 24px; font-weight: 900; color: #fbbf24; text-shadow: 0 0 15px rgba(251, 191, 36, 0.3);">0 ₴</div>
             </div>
         </div>
-        
-        <div class="payout-grid">
-            <div class="payout-card">
-                <div class="inc-label" style="color: var(--success);">+ Ожидаю сумму</div>
-                <input type="number" id="payPlus" placeholder="0">
-                <button class="btn-main" style="width:100%; font-size:10px; background:var(--success); margin-top:5px;" onclick="addTransaction('Ожидание (приход)', 'payPlus', true)">В ПЛЮС</button>
-            </div>
-            <div class="payout-card">
-                <div class="inc-label" style="color: #8b5cf6;">Крипта</div>
-                <input type="number" id="payCrypto" placeholder="0">
-                <button class="btn-main" style="width:100%; font-size:10px; margin-top:5px;" onclick="addTransaction('Выплата: Крипта', 'payCrypto', false)">ВЫПЛАТИТЬ</button>
-            </div>
-            <div class="payout-card">
-                <div class="inc-label" style="color: #10b981;">НЕЛЯ</div>
-                <input type="number" id="payNelya" placeholder="0">
-                <button class="btn-main" style="width:100%; font-size:10px; margin-top:5px;" onclick="addTransaction('Выплата: Товарка НЕЛЯ', 'payNelya', false)">ВЫПЛАТИТЬ</button>
-            </div>
-            <div class="payout-card">
-                <div class="inc-label" style="color: #3b82f6;">Товарка 2.0</div>
-                <input type="number" id="pay2" placeholder="0">
-                <button class="btn-main" style="width:100%; font-size:10px; margin-top:5px;" onclick="addTransaction('Выплата: Товарка 2.0', 'pay2', false)">ВЫПЛАТИТЬ</button>
-            </div>
-            <div class="payout-card">
-                <div class="inc-label" style="color: #f59e0b;">Другое</div>
-                <input type="number" id="payOther" placeholder="0">
-                <button class="btn-main" style="width:100%; font-size:10px; margin-top:5px;" onclick="addTransaction('Выплата: Другое', 'payOther', false)">ВЫПЛАТИТЬ</button>
-            </div>
-        </div>
+        <div class="payout-grid" id="payoutGrid"></div>
     </div>
 
     <div class="table-wrap" style="max-height: 250px;">
         <table>
-            <thead>
-                <tr><th>ДАТА</th><th>ТИП ОПЕРАЦИИ</th><th>СУММА</th><th>ИНФО</th><th style="text-align:right">УПР.</th></tr>
-            </thead>
+            <thead><tr><th>ДАТА</th><th>ТИП ОПЕРАЦИИ</th><th>СУММА</th><th>ИНФО</th><th style="text-align:right">УПР.</th></tr></thead>
             <tbody id="tableBodyPayouts"></tbody>
         </table>
     </div>
 </div>
 
 <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbzAPWeQsJjVhk2Ea2-L-3BywXBnbOYlBEEH82xlStf8--oZMgxSmNGtApRH-FKmt4Gq/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbwWuwWjCZajyArKcfhAYnulEZiRGL3nSoF_Oj4QYSHgO1alXdWmioDOFEGDTNylLoti/exec";
     const DB_KEY = 'nexus_v7_db';
+    const PROJECTS_KEY = 'nexus_v7_projects';
+    
     let db = JSON.parse(localStorage.getItem(DB_KEY)) || [];
-    let isSaving = false;
+    let projects = JSON.parse(localStorage.getItem(PROJECTS_KEY)) || ["Крипта", "Товарка НЕЛЯ", "Товарка 2.0", "Ютуб", "Другое"];
     let deletedIds = new Set(); 
     let myChart = null;
+
+    function flashLoader() {
+        const ldr = document.getElementById('global-loader');
+        ldr.style.display = 'flex';
+        setTimeout(() => { ldr.style.display = 'none'; }, 1100);
+    }
 
     function saveCfg() {
         localStorage.setItem('v7_goal_m', document.getElementById('goalMoney').value);
@@ -271,71 +230,109 @@
         render();
     }
 
+    async function addNewProject() {
+        const name = prompt("Название нового проекта:");
+        if (name && !projects.includes(name)) {
+            flashLoader();
+            projects.push(name);
+            localStorage.setItem(PROJECTS_KEY, JSON.stringify(projects));
+            render();
+            fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'ADD_PROJECT', name: name }) }).then(() => setTimeout(sync, 1500));
+        }
+    }
+
+    function deleteProject(name) {
+        if (confirm(`Удалить проект "${name}"?`)) {
+            flashLoader();
+            projects = projects.filter(p => p !== name);
+            localStorage.setItem(PROJECTS_KEY, JSON.stringify(projects));
+            render();
+            fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'DELETE_PROJECT', name: name }) }).then(() => setTimeout(sync, 1500));
+        }
+    }
+
     async function sync() {
-        if (isSaving) return;
         const bar = document.getElementById('sync-bar');
         bar.style.width = '30%';
         try {
             const res = await fetch(API_URL + "?t=" + Date.now());
             const data = await res.json();
-            if (Array.isArray(data)) {
-                const filteredData = data.filter(item => !deletedIds.has(String(item.ID).replace(/'/g, "").trim()));
-                db = filteredData;
+            if (data.projects) {
+                projects = data.projects.filter(p => p.toLowerCase() !== 'projects');
+                localStorage.setItem(PROJECTS_KEY, JSON.stringify(projects));
+            }
+            if (data.db) {
+                db = data.db.filter(item => !deletedIds.has(String(item.ID).replace(/'/g, "").trim()));
                 localStorage.setItem(DB_KEY, JSON.stringify(db));
             }
-        } catch(e) {}
+        } catch(e) { console.error("Sync error:", e); }
         bar.style.width = '100%';
         render();
-        setTimeout(() => bar.style.width = '0%', 500);
+        setTimeout(() => bar.style.width = '0%', 300);
     }
 
-    async function addTransaction(proj, inputId, isPlus) {
-        const val = document.getElementById(inputId).value;
-        if(!val || val <= 0) return;
-        isSaving = true;
-        const amount = isPlus ? Math.abs(val) : -Math.abs(val);
-        const entry = {
-            id: "PAY_" + Date.now(), date: new Date().toISOString().split('T')[0],
-            amount: 0, project: proj, earnings: amount,
-            comment: isPlus ? "Ожидаемый приход" : "Списание с баланса", action: 'ADD'
-        };
-        db.push({"ID": entry.id, "Дата": entry.date, "Сумма": 0, "Проект": entry.project, "Заработок": entry.earnings, "Комментарий": entry.comment});
-        localStorage.setItem(DB_KEY, JSON.stringify(db));
-        render();
-        document.getElementById(inputId).value = '';
-        await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(entry) });
-        setTimeout(() => { isSaving = false; sync(); }, 2000);
+    // Функция для безопасного получения YYYY-MM из любого типа даты
+    function getYearMonth(dateInput) {
+        try {
+            const d = new Date(dateInput);
+            if (isNaN(d.getTime())) return "";
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            return `${year}-${month}`;
+        } catch(e) { return ""; }
     }
 
     function render() {
-        const monthFilter = document.getElementById('filterMonth').value;
+        const select = document.getElementById('fProject');
+        const currentVal = select.value;
+        select.innerHTML = projects.map(p => `<option>${p}</option>`).join('');
+        if (projects.includes(currentVal)) select.value = currentVal;
+
+        document.getElementById('payoutGrid').innerHTML = `
+            <div class="payout-card">
+                <div class="inc-label" style="color: var(--success);">+ Приход</div>
+                <input type="number" id="payPlus" placeholder="0">
+                <button class="btn-main" style="width:100%; font-size:10px; background:var(--success); margin-top:5px;" onclick="addTransaction('Ожидание (приход)', 'payPlus', true)">В ПЛЮС</button>
+            </div>
+        ` + projects.map((p, idx) => `
+            <div class="payout-card">
+                <button class="btn-del-project" onclick="deleteProject('${p}')">−</button>
+                <div class="inc-label" style="color: var(--accent); padding-right: 20px;">${p}</div>
+                <input type="number" id="pay_${idx}" placeholder="0">
+                <button class="btn-main" style="width:100%; font-size:10px; margin-top:5px;" onclick="addTransaction('Выплата: ${p}', 'pay_${idx}', false)">ВЫПЛАТИТЬ</button>
+            </div>
+        `).join('');
+
+        const monthFilter = document.getElementById('filterMonth').value; 
         const gM = parseInt(document.getElementById('goalMoney').value) || 60000;
         const gD = parseInt(document.getElementById('goalDaily').value) || 2;
         
-        const filtered = db.filter(i => i["Дата"] && String(i["Дата"]).startsWith(monthFilter) && !(String(i["Проект"]).startsWith("Выплата") || String(i["Проект"]).startsWith("Ожидание")));
-        
-        let earned = 0;
-        let dirtySales = 0; // Для общей кассы
-        let totalBalance = 0; 
-        let dayStats = {};
-        let projectSums = {};
-        let monthSums = {};
+        let earned = 0, dirtySales = 0, totalBalance = 0, filteredSalesCount = 0; 
+        let dayStats = {}, projectSums = {}, monthSums = {};
 
         db.forEach(i => {
             const val = parseFloat(i["Заработок"]) || 0;
             const saleVal = parseFloat(i["Сумма"]) || 0;
-            const dStr = String(i["Дата"]);
-            const mKey = dStr.substring(0, 7);
             const proj = String(i["Проект"] || "Другое");
             const isTypePay = proj.startsWith("Выплата") || proj.startsWith("Ожидание");
-
+            
+            const itemYearMonth = getYearMonth(i["Дата"]);
+            if (!itemYearMonth) return;
+            
+            // Баланс считаем по всей базе всегда
             totalBalance += val;
 
             if (!isTypePay) {
-                if (dStr.startsWith(monthFilter.substring(0,4))) monthSums[mKey] = (monthSums[mKey] || 0) + val;
-                if (dStr.startsWith(monthFilter)) {
-                    earned += val;
+                // История за год
+                if (itemYearMonth.split('-')[0] === monthFilter.split('-')[0]) {
+                    monthSums[itemYearMonth] = (monthSums[itemYearMonth] || 0) + val;
+                }
+                
+                // Фильтр текущего месяца
+                if (itemYearMonth === monthFilter) {
+                    earned += val; 
                     dirtySales += saleVal;
+                    filteredSalesCount++;
                     let day = new Date(i["Дата"]).getDate();
                     dayStats[day] = (dayStats[day] || 0) + 1;
                     projectSums[proj] = (projectSums[proj] || 0) + val;
@@ -343,14 +340,12 @@
             }
         });
 
-        const formattedBalance = Math.round(totalBalance).toLocaleString() + ' ₴';
-        document.getElementById('hb-val').innerText = formattedBalance;
-        document.getElementById('salaryRemainder').innerText = formattedBalance;
-
+        document.getElementById('hb-val').innerText = Math.round(totalBalance).toLocaleString() + ' ₴';
+        document.getElementById('salaryRemainder').innerText = Math.round(totalBalance).toLocaleString() + ' ₴';
         document.getElementById('totalSales').innerText = Math.round(dirtySales).toLocaleString() + ' ₴';
         document.getElementById('valEarned').innerText = Math.round(earned).toLocaleString() + ' ₴';
         
-        const percent = Math.min(Math.round((earned / gM) * 100), 100);
+        const percent = gM > 0 ? Math.min(Math.round((earned / gM) * 100), 100) : 0;
         document.getElementById('progressBar').style.width = percent + '%';
         document.getElementById('percentText').innerText = percent + '%';
         document.getElementById('remainText').innerText = `осталось ${Math.max(0, gM - Math.round(earned)).toLocaleString()} ₴`;
@@ -360,27 +355,24 @@
             pList.innerHTML += `<div class="stat-item"><span>${n}</span><span>${Math.round(s)}</span></div>`;
         });
 
-        const cal = document.getElementById('calendar'); cal.innerHTML = '';
         const parts = monthFilter.split('-');
         const daysInMonth = new Date(parts[0], parts[1], 0).getDate();
+        const cal = document.getElementById('calendar'); cal.innerHTML = '';
         for(let i=1; i<=daysInMonth; i++) {
             const count = dayStats[i] || 0;
             let cls = count >= gD ? 'target-met' : (count > 0 ? 'has-pay' : '');
             cal.innerHTML += `<div class="day ${cls}"><span>${i}</span>${count > 0 ? `<span style="font-size: 8px; font-weight: 900; opacity: 0.8;">${count}</span>` : ''}</div>`;
         }
 
-        const totalOps = filtered.length;
         const now = new Date();
-        const isCurrentMonth = monthFilter === now.toISOString().substring(0, 7);
+        const currentMonthStr = getYearMonth(now);
+        const isCurrentMonth = monthFilter === currentMonthStr;
         let daysToCount = isCurrentMonth ? now.getDate() : daysInMonth;
 
-        const avgCheckVal = totalOps > 0 ? Math.round(dirtySales / totalOps) : 0;
-        const avgCountVal = (totalOps / daysToCount).toFixed(1); 
-        const avgDayMoney = Math.round(earned / daysToCount);
-        const forecastVal = avgDayMoney * daysInMonth;
+        document.getElementById('avgCheck').innerText = (filteredSalesCount > 0 ? Math.round(dirtySales / filteredSalesCount) : 0).toLocaleString() + ' ₴';
+        document.getElementById('avgCount').innerText = (filteredSalesCount / (daysToCount || 1)).toFixed(1);
 
-        document.getElementById('avgCheck').innerText = avgCheckVal.toLocaleString() + ' ₴';
-        document.getElementById('avgCount').innerText = avgCountVal;
+        let forecastVal = isCurrentMonth ? Math.round((earned / (daysToCount || 1)) * daysInMonth) : earned;
         document.getElementById('forecast').innerText = forecastVal.toLocaleString() + ' ₴';
 
         const yList = document.getElementById('yearStats'); yList.innerHTML = '';
@@ -390,98 +382,70 @@
         });
 
         const tbody = document.getElementById('tableBody'); tbody.innerHTML = '';
-        filtered.sort((a,b) => new Date(b["Дата"]) - new Date(a["Дата"])).forEach(i => {
-            tbody.innerHTML += `<tr>
-                <td style="font-weight:900">${new Date(i["Дата"]).getDate()}</td>
-                <td>${i["Проект"]}</td>
-                <td>${Math.round(i["Сумма"]).toLocaleString()}</td>
-                <td style="color:var(--success); font-weight:900">${Math.round(i["Заработок"])}</td>
-                <td style="opacity:0.5; font-size:11px">${i["Комментарий"] || ''}</td>
-                <td style="text-align:right">
-                    <button class="btn-tool" onclick="editE('${i.ID}')">✏️</button>
-                    <button class="btn-tool" style="color:var(--danger)" onclick="delE('${i.ID}')">🗑️</button>
-                </td>
-            </tr>`;
+        db.filter(i => {
+            const itemMonth = getYearMonth(i["Дата"]);
+            const proj = String(i["Проект"]);
+            return itemMonth === monthFilter && !proj.startsWith("Выплата") && !proj.startsWith("Ожидание");
+        }).sort((a,b) => new Date(b["Дата"]) - new Date(a["Дата"])).forEach(i => {
+            tbody.innerHTML += `<tr><td style="font-weight:900">${new Date(i["Дата"]).getDate()}</td><td>${i["Проект"]}</td><td>${Math.round(i["Сумма"]).toLocaleString()}</td><td style="color:var(--success); font-weight:900">${Math.round(i["Заработок"])}</td><td style="opacity:0.5; font-size:11px">${i["Комментарий"] || ''}</td><td style="text-align:right"><button class="btn-tool" onclick="editE('${i.ID}')">✏️</button><button class="btn-tool" style="color:var(--danger)" onclick="delE('${i.ID}')">🗑️</button></td></tr>`;
         });
 
         const tbodyPay = document.getElementById('tableBodyPayouts'); tbodyPay.innerHTML = '';
-        db.filter(i => String(i["Проект"]).startsWith("Выплата") || String(i["Проект"]).startsWith("Ожидание"))
-          .sort((a,b) => new Date(b["Дата"]) - new Date(a["Дата"]))
-          .forEach(i => {
+        db.filter(i => {
+            const itemMonth = getYearMonth(i["Дата"]);
+            const proj = String(i["Проект"]);
+            return itemMonth === monthFilter && (proj.startsWith("Выплата") || proj.startsWith("Ожидание"));
+        }).sort((a,b) => new Date(b["Дата"]) - new Date(a["Дата"])).forEach(i => {
               const val = parseFloat(i["Заработок"]) || 0;
               const color = val > 0 ? 'var(--success)' : 'var(--danger)';
-              tbodyPay.innerHTML += `<tr>
-                  <td>${new Date(i["Дата"]).toLocaleDateString()}</td>
-                  <td style="font-weight:800; color:${color}">${i["Проект"]}</td>
-                  <td style="font-weight:900; color:${color}">${val > 0 ? '+' : ''}${Math.round(val)}</td>
-                  <td style="opacity:0.5; font-size:11px">${i["Комментарий"] || ''}</td>
-                  <td style="text-align:right"><button class="btn-tool" style="color:var(--danger)" onclick="delE('${i.ID}')">🗑️</button></td>
-              </tr>`;
-          });
+              tbodyPay.innerHTML += `<tr><td>${new Date(i["Дата"]).getDate()} число</td><td style="font-weight:800; color:${color}">${i["Проект"]}</td><td style="font-weight:900; color:${color}">${val > 0 ? '+' : ''}${Math.round(val)}</td><td style="opacity:0.5; font-size:11px">${i["Комментарий"] || ''}</td><td style="text-align:right"><button class="btn-tool" style="color:var(--danger)" onclick="delE('${i.ID}')">🗑️</button></td></tr>`;
+        });
 
         updateChart(daysInMonth, dayStats);
     }
-
+    
     function updateChart(daysCount, dayStats) {
         const ctx = document.getElementById('paymentChart').getContext('2d');
         const labels = Array.from({length: daysCount}, (_, i) => i + 1);
         const data = labels.map(day => dayStats[day] || 0);
-        const gradient = ctx.createLinearGradient(0, 0, 0, 150);
-        gradient.addColorStop(0, 'rgba(59, 130, 246, 0.4)'); gradient.addColorStop(1, 'rgba(59, 130, 246, 0)');  
-        
         if (myChart) {
-            myChart.data.labels = labels; 
-            myChart.data.datasets[0].data = data; 
-            myChart.options.scales.x.ticks.maxTicksLimit = daysCount; 
-            myChart.update('none');
+            myChart.data.labels = labels; myChart.data.datasets[0].data = data; myChart.update('none');
         } else {
             myChart = new Chart(ctx, {
                 type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{ label: 'Оплат', data: data, borderColor: '#3b82f6', borderWidth: 2, fill: true, backgroundColor: gradient, tension: 0.4, pointRadius: 2, pointBackgroundColor: '#3b82f6' }]
-                },
-                options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false, 
-                    plugins: { legend: { display: false } }, 
-                    scales: { 
-                        x: { 
-                            grid: { display: false }, 
-                            ticks: { 
-                                color: 'rgba(226, 232, 240, 0.5)', 
-                                font: { size: 8 }, 
-                                maxRotation: 0, 
-                                autoSkip: false, 
-                                maxTicksLimit: 31 
-                            } 
-                        }, 
-                        y: { 
-                            grid: { color: 'rgba(255, 255, 255, 0.03)' }, 
-                            beginAtZero: true, 
-                            ticks: { color: 'rgba(226, 232, 240, 0.3)', font: { size: 9 }, stepSize: 1 } 
-                        } 
-                    } 
-                }
+                data: { labels: labels, datasets: [{ label: 'Оплат', data: data, borderColor: '#3b82f6', borderWidth: 2, fill: true, tension: 0.4, pointRadius: 2 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { color: 'rgba(226, 232, 240, 0.5)', font: { size: 8 } } }, y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
             });
         }
     }
 
+    async function addTransaction(proj, inputId, isPlus) {
+        const val = document.getElementById(inputId).value;
+        if(!val || val <= 0) return;
+        flashLoader();
+        const amount = isPlus ? Math.abs(val) : -Math.abs(val);
+        const entry = { id: "PAY_" + Date.now(), date: new Date().toISOString().split('T')[0], amount: 0, project: proj, earnings: amount, comment: isPlus ? "Пополнение" : "Выплата", action: 'ADD' };
+        db.push({"ID": entry.id, "Дата": entry.date, "Сумма": 0, "Проект": entry.project, "Заработок": entry.earnings, "Комментарий": entry.comment});
+        localStorage.setItem(DB_KEY, JSON.stringify(db)); render();
+        fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(entry) }).then(() => setTimeout(sync, 1500));
+        document.getElementById(inputId).value = '';
+    }
+
     async function delE(id) {
-        if(!confirm("Удалить?")) return;
+        if(!confirm("Удалить запись?")) return;
+        flashLoader();
         const sId = String(id).replace(/'/g, "").trim();
-        isSaving = true; deletedIds.add(sId); 
+        deletedIds.add(sId); 
         db = db.filter(i => String(i.ID).replace(/'/g, "").trim() !== sId);
         localStorage.setItem(DB_KEY, JSON.stringify(db)); render();
-        try { await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'DELETE', id: sId }) }); } catch(e) {}
-        setTimeout(() => { isSaving = false; sync(); }, 7000);
+        fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'DELETE', id: sId }) }).then(() => setTimeout(sync, 1000));
     }
 
     function editE(id) {
         const item = db.find(i => String(i.ID) === String(id));
         if(!item) return;
         document.getElementById('fId').value = item.ID;
-        document.getElementById('fDate').value = item["Дата"];
+        document.getElementById('fDate').value = new Date(item["Дата"]).toISOString().split('T')[0];
         document.getElementById('fAmount').value = item["Сумма"];
         document.getElementById('fProject').value = item["Проект"];
         document.getElementById('fComment').value = item["Комментарий"] || '';
@@ -489,8 +453,8 @@
         window.scrollTo({top: 0, behavior: 'smooth'});
     }
 
-    document.getElementById('addForm').onsubmit = async (e) => {
-        e.preventDefault(); isSaving = true;
+    document.getElementById('addForm').onsubmit = (e) => {
+        e.preventDefault(); flashLoader();
         const id = document.getElementById('fId').value || "ID_" + Date.now();
         const entry = {
             id: id, date: document.getElementById('fDate').value, amount: document.getElementById('fAmount').value,
@@ -500,15 +464,14 @@
         if(entry.action === 'EDIT') db = db.filter(i => String(i.ID) !== String(id));
         db.push({"ID": id, "Дата": entry.date, "Сумма": entry.amount, "Проект": entry.project, "Заработок": entry.earnings, "Комментарий": entry.comment});
         localStorage.setItem(DB_KEY, JSON.stringify(db)); render();
-        await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(entry) });
+        fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(entry) }).then(() => setTimeout(sync, 1500));
         e.target.reset(); document.getElementById('fId').value = ''; document.getElementById('btnLabel').innerText = "ЗАФИКСИРОВАТЬ";
         document.getElementById('fDate').value = new Date().toISOString().split('T')[0];
-        setTimeout(() => { isSaving = false; sync(); }, 4000);
     };
 
-    const now = new Date();
-    document.getElementById('filterMonth').value = now.toISOString().substring(0, 7);
-    document.getElementById('fDate').value = now.toISOString().split('T')[0];
+    const nowInit = new Date();
+    document.getElementById('filterMonth').value = getYearMonth(nowInit);
+    document.getElementById('fDate').value = nowInit.toISOString().split('T')[0];
     document.getElementById('goalMoney').value = localStorage.getItem('v7_goal_m') || 60000;
     document.getElementById('goalDaily').value = localStorage.getItem('v7_goal_d') || 2;
     render(); sync();
