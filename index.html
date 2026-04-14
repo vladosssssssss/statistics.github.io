@@ -168,7 +168,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);cursor:po
   <div class="login-sub">Выберите роль для входа</div>
   <div class="role-btns">
     <button class="role-btn" onclick="selRoleUI('admin')" id="rb-admin">👑 Админ</button>
-    <button class="role-btn" onclick="selRoleUI('manager')" id="rb-manager">👤 Менеджер</button>
+    <button class="role-btn" onclick="selRoleUI('manager')" id="rb-manager">👤 Менеджерр</button>
     <!-- <button class="role-btn" onclick="selRoleUI('guest')" id="rb-guest">👁️ Гость</button> -->
   </div>
   <div id="mgrSelWrap" style="display:none">
@@ -669,6 +669,39 @@ function toggleAdAll(){
   document.getElementById('btnAdAll').classList.toggle('on-p',adAllTime);
   render();
 }
+async function smartLogin() {
+  // Ищем поля ввода (убедись, что ID совпадают с твоим HTML)
+  const userEl = document.getElementById('logUser'); 
+  const passEl = document.getElementById('logPass');
+  const err = document.getElementById('logErr');
+
+  if(!userEl || !passEl) return;
+
+  const user = userEl.value.trim();
+  const pass = passEl.value.trim();
+
+  // 1. Сначала проверяем по локальной памяти (чтобы зайти мгновенно)
+  let acc = getAcc();
+  let m = acc.managers.find(x => x.name.toLowerCase() === user.toLowerCase() && String(x.password) === String(pass));
+
+  // 2. Если не подошло — НЕ ПИШЕМ "ОШИБКА", а сначала стучимся в таблицу
+  if (!m) {
+    if(err) err.innerText = 'Проверка обновлений...';
+    await sync(); // Обновляем localStorage данными из Excel
+    acc = getAcc(); // Берем уже обновленную память
+    m = acc.managers.find(x => x.name.toLowerCase() === user.toLowerCase() && String(x.password) === String(pass));
+  }
+
+  // 3. Финальная проверка
+  if (m) {
+    setSess({ id: m.id, role: 'manager', name: m.name });
+    enterApp(); // Входим в приложение
+    if(err) err.innerText = '';
+  } else {
+    if(err) err.innerText = 'Неверный логин или пароль';
+  }
+}
+
 
 // ============================================================
 //  DATA
@@ -753,17 +786,23 @@ async function sync(){
         saveAllProjects(all);
       }
     }
-    if(data.managers&&data.managers.length){
+if(data.managers&&data.managers.length){
       const acc=getAcc();
       data.managers.forEach(gm=>{
         const local=acc.managers.find(m=>m.id===gm.id);
-        if(!local) acc.managers.push({id:gm.id,name:gm.name,password:gm.password});
-        else local.name=gm.name;
-        // sync per-manager goals if provided
+        if(!local) {
+          // Если менеджера вообще нет в памяти телефона — добавляем
+          acc.managers.push({id:gm.id,name:gm.name,password:gm.password});
+        } else {
+          // ВОТ ТУТ КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ:
+          // Принудительно обновляем пароль и имя из таблицы
+          local.password = String(gm.password); 
+          local.name = gm.name;
+        }
+        // Обновляем цели (план на месяц и день)
         if(gm.goalMoney||gm.goalDaily){
           const cfg={goalMoney:gm.goalMoney||60000,goalDaily:gm.goalDaily||2};
-          const existing=localStorage.getItem(getCfgKey(gm.id));
-          if(!existing) localStorage.setItem(getCfgKey(gm.id),JSON.stringify(cfg));
+          localStorage.setItem(getCfgKey(gm.id),JSON.stringify(cfg));
         }
       });
       saveAcc(acc);
