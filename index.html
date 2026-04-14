@@ -19,7 +19,7 @@ body{background:var(--bg);color:var(--text);padding:15px;min-height:100vh;backgr
 .login-box{background:rgba(22,28,45,0.97);border:1px solid var(--border);border-radius:24px;padding:40px;width:340px;max-width:95vw}
 .login-title{font-size:22px;font-weight:900;margin-bottom:6px;color:#fff}
 .login-sub{font-size:12px;color:rgba(255,255,255,0.35);margin-bottom:28px}
-.role-btns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:18px}
+.role-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px}
 .role-btn{padding:10px 5px;border-radius:12px;border:1px solid var(--border);background:rgba(0,0,0,0.3);color:rgba(255,255,255,0.45);cursor:pointer;font-size:11px;font-weight:700;transition:.2s}
 .role-btn.active{border-color:var(--accent);color:#fff;background:rgba(59,130,246,0.15)}
 .f-input{width:100%;background:rgba(0,0,0,0.4);border:1px solid var(--border);color:#fff;padding:12px 15px;border-radius:12px;font-size:14px;outline:none;margin-bottom:10px}
@@ -166,11 +166,11 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);cursor:po
 <div class="login-box">
   <div class="login-title">📊 My Stats</div>
   <div class="login-sub">Выберите роль для входа</div>
-<div class="role-btns">
+  <div class="role-btns">
     <button class="role-btn" onclick="selRoleUI('admin')" id="rb-admin">👑 Админ</button>
     <button class="role-btn" onclick="selRoleUI('manager')" id="rb-manager">👤 Менеджер</button>
-    <button class="role-btn" onclick="selRoleUI('guest')" id="rb-guest">👁️ Гость</button>
-</div>
+    <!-- <button class="role-btn" onclick="selRoleUI('guest')" id="rb-guest">👁️ Гость</button> -->
+  </div>
   <div id="mgrSelWrap" style="display:none">
     <select class="f-select" id="loginMgrSel"></select>
   </div>
@@ -179,8 +179,10 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);cursor:po
   </div>
   <div id="loginErr" class="l-err"></div>
   <button class="login-btn" onclick="doLogin()">ВОЙТИ</button>
-  <div style="text-align:center;margin-top:10px">
-    <button style="background:none;border:none;color:rgba(255,255,255,.28);font-size:12px;cursor:pointer" onclick="guestLogin()">Войти как гость (только просмотр)</button>
+  <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
+    <div style="font-size:10px;color:rgba(255,255,255,.3);margin-bottom:8px;text-align:center">ТОЛЬКО ПРОСМОТР</div>
+    <select class="f-select" id="guestMgrSel" style="margin-bottom:8px"></select>
+    <button style="width:100%;background:rgba(255,255,255,.05);border:1px solid var(--border);color:rgba(255,255,255,.45);padding:10px;border-radius:12px;font-size:13px;cursor:pointer;font-weight:700" onclick="guestLogin()">👁️ Войти как гость</button>
   </div>
 </div>
 </div>
@@ -433,10 +435,16 @@ function getAllManagersProjects() {
 //  LOGIN
 // ============================================================
 let selRole = 'admin';
+function populateGuestSel(){
+  const acc=getAcc();
+  const sel=document.getElementById('guestMgrSel');
+  if(sel) sel.innerHTML=acc.managers.map(m=>`<option value="${m.id}">${m.name}</option>`).join('');
+}
 function selRoleUI(role){
   selRole=role;
   document.querySelectorAll('.role-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('rb-'+role).classList.add('active');
+  const btn=document.getElementById('rb-'+role);
+  if(btn)btn.classList.add('active');
   document.getElementById('passWrap').style.display = role==='guest'?'none':'block';
   document.getElementById('mgrSelWrap').style.display = role==='manager'?'block':'none';
   if(role==='manager') populateMgrSel();
@@ -446,7 +454,18 @@ function populateMgrSel(){
   const acc=getAcc();
   document.getElementById('loginMgrSel').innerHTML=acc.managers.map(m=>`<option value="${m.id}">${m.name}</option>`).join('');
 }
-function guestLogin(){ setSess({role:'guest',name:'Гость',id:'guest'}); enterApp(); }
+function guestLogin(){
+  const sel=document.getElementById('guestMgrSel');
+  const acc=getAcc();
+  if(sel&&sel.value){
+    const mgr=acc.managers.find(m=>m.id===sel.value);
+    const name=mgr?mgr.name:'Гость';
+    setSess({role:'guest',name:'👁 '+name,id:'guest',viewMgrId:sel.value});
+  } else {
+    setSess({role:'guest',name:'Гость',id:'guest',viewMgrId:null});
+  }
+  enterApp();
+}
 function doLogin(){
   const pass=document.getElementById('loginPass').value;
   const acc=getAcc();
@@ -473,6 +492,7 @@ function enterApp(){
   document.getElementById('loginScreen').style.display='none';
   document.getElementById('mainApp').style.display='flex';
   applyRoleUI();
+  loadCfg();
   render();
   sync();
 }
@@ -663,9 +683,26 @@ function flashLoader(){
   const l=document.getElementById('global-loader');
   l.style.display='flex';setTimeout(()=>l.style.display='none',1100);
 }
+function getCfgKey(id){ return 'nx8_cfg_'+id; }
+function loadCfg(){
+  const s=getSess();
+  const id=s?s.id:'_default';
+  const stored=localStorage.getItem(getCfgKey(id));
+  const cfg=stored?JSON.parse(stored):{goalMoney:60000,goalDaily:2};
+  document.getElementById('goalMoney').value=cfg.goalMoney||60000;
+  document.getElementById('goalDaily').value=cfg.goalDaily||2;
+}
 function saveCfg(){
-  localStorage.setItem('nx8_gm',document.getElementById('goalMoney').value);
-  localStorage.setItem('nx8_gd',document.getElementById('goalDaily').value);
+  const s=getSess();
+  const id=s?s.id:'_default';
+  const cfg={goalMoney:parseInt(document.getElementById('goalMoney').value)||60000,goalDaily:parseInt(document.getElementById('goalDaily').value)||2};
+  localStorage.setItem(getCfgKey(id),JSON.stringify(cfg));
+  // sync to sheets for managers
+  if(s&&s.role==='manager'){
+    const acc=getAcc();
+    const m=acc.managers.find(m=>m.id===s.id);
+    if(m) fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'SAVE_MANAGER',id:s.id,name:m.name,password:m.password,goalMoney:cfg.goalMoney,goalDaily:cfg.goalDaily})});
+  }
   render();
 }
 function setPeriodMonth(){viewAllTime=false;document.getElementById('btnAllTime').classList.remove('on');render();}
@@ -722,8 +759,15 @@ async function sync(){
         const local=acc.managers.find(m=>m.id===gm.id);
         if(!local) acc.managers.push({id:gm.id,name:gm.name,password:gm.password});
         else local.name=gm.name;
+        // sync per-manager goals if provided
+        if(gm.goalMoney||gm.goalDaily){
+          const cfg={goalMoney:gm.goalMoney||60000,goalDaily:gm.goalDaily||2};
+          const existing=localStorage.getItem(getCfgKey(gm.id));
+          if(!existing) localStorage.setItem(getCfgKey(gm.id),JSON.stringify(cfg));
+        }
       });
       saveAcc(acc);
+      populateGuestSel();
     }
   }catch(e){console.error(e);}
   bar.style.width='100%';
@@ -761,6 +805,7 @@ function render(){
   // Determine filters
   let mgrFilter=null;
   if(s.role==='manager')mgrFilter=[s.id];
+  else if(s.role==='guest'&&s.viewMgrId)mgrFilter=[s.viewMgrId];
   else if(s.role==='admin'&&selMgrs.length>0)mgrFilter=selMgrs;
 
   let projFilter=null;
@@ -804,20 +849,8 @@ function render(){
     const iym=ym(i["Дата"]);if(!iym)return;
     const recMgr=getRecMgr(i);
 
-// Проверяем, относится ли эта запись к текущему менеджеру (или выбранным фильтрам админа)
-    const isAllowedMgr = !mgrFilter || mgrFilter.includes(recMgr);
-
-    if (isAllowedMgr) {
-        // 1. Верхний сумарный баланс (теперь считает только "свои" или отфильтрованные)
-        totalBalance += val; 
-        
-        // 2. Нижний баланс для раздела выплат
-        if (payMgrIdForBal) {
-            if (recMgr === payMgrIdForBal) mgrBalance += val;
-        } else {
-            mgrBalance += val;
-        }
-    }
+    totalBalance+=val;
+    if(payMgrIdForBal){ if(recMgr===payMgrIdForBal) mgrBalance+=val; } else mgrBalance+=val;
     if(isPay)return;
 
     // month history (filtered)
@@ -1293,9 +1326,9 @@ document.getElementById('filterMonth').value=ymNow;
 document.getElementById('adFrom').value=ymNow;
 document.getElementById('adTo').value=ymNow;
 document.getElementById('fDate').value=now0.toISOString().split('T')[0];
-document.getElementById('goalMoney').value=localStorage.getItem('nx8_gm')||60000;
-document.getElementById('goalDaily').value=localStorage.getItem('nx8_gd')||2;
+// goalMoney and goalDaily loaded per-user in loadCfg()
 
+populateGuestSel();
 const es=getSess();
 if(es){enterApp();}else{selRoleUI('admin');}
 </script>
