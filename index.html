@@ -1326,11 +1326,21 @@ document.getElementById('filterMonth').value=ymNow;
 document.getElementById('adFrom').value=ymNow;
 document.getElementById('adTo').value=ymNow;
 document.getElementById('fDate').value=now0.toISOString().split('T')[0];
-// goalMoney and goalDaily loaded per-user in loadCfg()
 
 populateGuestSel();
 const es=getSess();
-if(es){enterApp();}else{selRoleUI('admin');}
+if(es){
+  enterApp();
+}else{
+  selRoleUI('admin');
+}
+
+// Запускаем тихую синхронизацию при открытии сайта
+// Это обновит пароли и данные в фоне, пока страница открыта
+setTimeout(() => {
+  sync();
+}, 500); 
+
 </script>
 </body>
 </html>
