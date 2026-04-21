@@ -72,6 +72,15 @@
 </div>
 </div>
 
+<!-- PAYMENT HISTORY MODAL -->
+<div id="paymentHistoryModal" class="mo">
+<div class="mb">
+  <h2>💳 История оплат</h2>
+  <div id="paymentHistoryContent" style="margin:10px 0"></div>
+  <button class="mb-sec" onclick="closeModal('paymentHistoryModal')">Закрыть</button>
+</div>
+</div>
+
 <div id="sync-bar"></div>
 <div id="global-loader"><div class="spinner"></div></div>
 
@@ -209,18 +218,28 @@
 </div>
 
 <!-- ADD FORM -->
-<form class="glass form-row" id="addForm">
+<form class="glass form-row" id="addForm" style="position:relative">
+  <button type="button" onclick="cancelEdit()" style="position:absolute;top:5px;right:5px;background:none;border:none;color:rgba(255,255,255,0.5);font-size:20px;cursor:pointer;padding:0;width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:4px" onmouseover="this.style.color='rgba(255,255,255,0.8)'" onmouseout="this.style.color='rgba(255,255,255,0.5)'">×</button>
   <input type="hidden" id="fId">
   <input type="date" id="fDate" required>
   <input type="number" id="fAmount" placeholder="Сумма" required>
+  <input type="number" id="fActualAmount" placeholder="Фактически оплачено">
   <select id="fProject"></select>
   <input type="text" id="fComment" placeholder="Инфо">
   <button type="submit" class="btn-p" id="btnLabel">ЗАФИКСИРОВАТЬ</button>
 </form>
 
+<div class="glass" style="margin-bottom:10px;padding:10px">
+  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+    <span style="font-size:12px;font-weight:700;opacity:.7">ПОИСК:</span>
+    <input type="text" id="searchInput" placeholder="Поиск по нику, номеру, имени..." style="flex:1;min-width:200px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:rgba(255,255,255,.05);color:#fff;font-size:12px" oninput="filterTable()">
+    <button onclick="clearSearch()" style="padding:6px 12px;font-size:11px;border:1px solid var(--border);border-radius:6px;background:rgba(255,255,255,.1);color:#fff;cursor:pointer">ОЧИСТИТЬ</button>
+  </div>
+</div>
+
 <div class="tw">
   <table>
-    <thead><tr><th>ДАТА</th><th>МЕНЕДЖЕР</th><th>ПРОЕКТ</th><th>ОПЛАТА</th><th>6%</th><th>ИНФО</th><th style="text-align:right">УПР.</th></tr></thead>
+    <thead><tr><th>ДА</th><th>МЕНЕДЖЕР</th><th>ПРОЕКТ</th><th>ОПЛАТА</th><th>6%</th><th>ФАКТ. ОПЛАТА</th><th>ФАКТ. 6%</th><th>ИНФО</th><th style="text-align:right">УПР.</th></tr></thead>
     <tbody id="tableBody"></tbody>
   </table>
 </div>
@@ -233,8 +252,10 @@
       <button onclick="addNewProject()" class="btn-ap">+</button>
     </div>
     <div style="text-align:right">
-      <div class="inc-lbl" style="color:#fff;margin-bottom:0">ОСТАТОК К ВЫПЛАТЕ:</div>
-      <div id="salaryRemainder" style="font-size:24px;font-weight:900;color:#fbbf24">0 ₴</div>
+      <div class="inc-lbl" style="color:#fff;margin-bottom:0">Потенциальный остаток:</div>
+      <div id="salaryRemainder" style="font-size:20px;font-weight:900;color:#fbbf24">0 ₴</div>
+      <div class="inc-lbl" style="color:#fff;margin-top:8px;margin-bottom:0">Фактический остаток:</div>
+      <div id="actualSalaryRemainder" style="font-size:20px;font-weight:900;color:#10b981">0 ₴</div>
     </div>
   </div>
   <div class="payout-grid" id="payoutGrid"></div>
