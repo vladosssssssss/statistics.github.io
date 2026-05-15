@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="description" content="Личная статистика доходов, проектов, выплат и активности менеджеров.">
+<title>My personal statistics</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%23ef4444'/><path d='M70 30 C 55 15, 45 15, 30 30 C 15 45, 15 55, 30 70 L 70 70 Z' fill='white' transform='rotate(45 50 50)'/></svg>" type="image/svg+xml">
+<link rel="stylesheet" href="./assets/css/styles.css">
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+<div class="login-box">
+  <div class="login-title">📊 My Stats</div>
+  <div class="login-sub">Выберите роль для входа</div>
+  <div class="role-btns">
+    <button class="role-btn" onclick="selRoleUI('admin')" id="rb-admin">👑 Админ</button>
+    <button class="role-btn" onclick="selRoleUI('manager')" id="rb-manager">👤 Менеджер</button>
+    <!-- <button class="role-btn" onclick="selRoleUI('guest')" id="rb-guest">👁️ Гость</button> -->
+  </div>
+  <div id="mgrSelWrap" style="display:none">
+    <select class="f-select" id="loginMgrSel"></select>
+  </div>
+  <div id="passWrap">
+    <input type="password" class="f-input" id="loginPass" placeholder="Пароль" onkeydown="if(event.key==='Enter')doLogin()">
+  </div>
+  <div id="loginErr" class="l-err"></div>
+  <button class="login-btn" onclick="doLogin()">ВОЙТИ</button>
+  <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
+    <div style="font-size:10px;color:rgba(255,255,255,.3);margin-bottom:8px;text-align:center">ТОЛЬКО ПРОСМОТР</div>
+    <select class="f-select" id="guestMgrSel" style="margin-bottom:8px"></select>
+    <button style="width:100%;background:rgba(255,255,255,.05);border:1px solid var(--border);color:rgba(255,255,255,.45);padding:10px;border-radius:12px;font-size:13px;cursor:pointer;font-weight:700" onclick="guestLogin()">👁️ Войти как гость</button>
+  </div>
+</div>
+</div>
+
+<!-- PROFILE MODAL -->
+<div id="profileModal" class="mo">
+<div class="mb">
+  <h2>👤 Профиль</h2>
+  <div style="font-size:10px;color:var(--accent);font-weight:800;margin-bottom:6px;letter-spacing:.5px">ИМЯ</div>
+  <div class="pf-row">
+    <input type="text" class="f-input" id="pfName" placeholder="Имя">
+    <button class="s-btn s-btn-blue" style="white-space:nowrap" onclick="saveName()">Сохранить</button>
+  </div>
+  <div style="font-size:10px;color:var(--accent);font-weight:800;margin:14px 0 6px;letter-spacing:.5px">СМЕНА ПАРОЛЯ</div>
+  <input type="password" class="f-input" id="cpOld" placeholder="Старый пароль">
+  <input type="password" class="f-input" id="cpNew" placeholder="Новый пароль">
+  <input type="password" class="f-input" id="cpNew2" placeholder="Повторите новый пароль">
+  <div id="cpErr" class="m-err"></div>
+  <button class="mb-btn" onclick="doChangePass()">ИЗМЕНИТЬ ПАРОЛЬ</button>
+  <button class="mb-sec" onclick="closeModal('profileModal')">Закрыть</button>
+</div>
+</div>
+
+<!-- MANAGER MANAGEMENT MODAL -->
+<div id="mgrModal" class="mo">
+<div class="mb">
+  <h2>👥 Менеджеры</h2>
+  <div id="mgrList"></div>
+  <hr style="border-color:var(--border);margin:12px 0">
+  <div style="font-size:10px;color:var(--accent);font-weight:800;margin-bottom:8px">ДОБАВИТЬ МЕНЕДЖЕРА</div>
+  <input type="text" class="f-input" id="newMgrName" placeholder="Имя">
+  <input type="password" class="f-input" id="newMgrPass" placeholder="Пароль (мин. 4 символа)">
+  <div id="mgrErr" class="m-err"></div>
+  <button class="mb-btn" onclick="addManager()">ДОБАВИТЬ</button>
+  <button class="mb-sec" onclick="closeModal('mgrModal')">Закрыть</button>
+</div>
+</div>
+
+<!-- PAYMENT HISTORY MODAL -->
+<div id="paymentHistoryModal" class="mo">
+<div class="mb">
+  <h2>💳 История оплат</h2>
+  <div id="paymentHistoryContent" style="margin:10px 0"></div>
+  <button class="mb-sec" onclick="closeModal('paymentHistoryModal')">Закрыть</button>
+</div>
+</div>
+
+<!-- DAY DETAILS MODAL -->
+<div id="dayDetailsModal" class="mo">
+<div class="mb">
+  <h2 id="dayDetailsTitle">📊 Детали</h2>
+  <div id="dayDetailsContent" style="margin:10px 0"></div>
+  <button class="mb-sec" onclick="closeModal('dayDetailsModal')">Закрыть</button>
+</div>
+</div>
+
+<div id="global-loader"><div class="spinner"></div></div>
+
+<div class="container" id="mainApp" style="display:none">
+
+<!-- SESSION BAR -->
+<div id="sessionBar">
+  <div class="s-info">
+    <span id="sBadge" class="role-badge"></span>
+    <span id="sName" class="s-name"></span>
+  </div>
+  <div style="display:flex;gap:6px;align-items:center">
+    <button class="s-btn s-btn-blue" id="btnProfile" onclick="openProfile()">⚙️ Профиль</button>
+    <button class="s-btn s-btn-red" onclick="logout()">Выйти</button>
+  </div>
+</div>
+
+<!-- ADMIN FILTER BAR -->
+<div id="adminBar">
+  <div class="ab-row">
+    <span class="ab-lbl mgr">МЕНЕДЖЕРЫ:</span>
+    <div id="mgrChips"></div>
+    <button class="s-btn s-btn-red" style="font-size:10px;padding:4px 10px" onclick="openModal('mgrModal');renderMgrList()">👥 Управление</button>
+  </div>
+  <div class="ab-row">
+    <span class="ab-lbl proj">ПРОЕКТЫ:</span>
+    <div id="projChips"></div>
+  </div>
+  <div class="ab-row">
+    <span class="ab-lbl per">ПЕРИОД:</span>
+    <div class="period-row">
+      <input type="month" id="adFrom" class="mini-input" onchange="render()">
+      <span style="font-size:11px;opacity:.4">—</span>
+      <input type="month" id="adTo" class="mini-input" onchange="render()">
+      <button class="chip" id="btnAdAll" onclick="toggleAdAll()">Всё время</button>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS BAR -->
+<div class="settings-bar">
+  <div class="sf">ЦЕЛЬ: <input type="number" id="goalMoney" onchange="saveCfg()"></div>
+  <div class="sf">ПЛАН/ДЕНЬ: <input type="number" id="goalDaily" onchange="saveCfg()"></div>
+  <div class="hb-wrap">
+    <span class="hb-lbl">Текущий остаток</span>
+    <div id="hb-val">0 ₴</div>
+  </div>
+  <div class="sf" style="margin-left:auto">
+    <div class="per-wrap">
+      <input type="month" id="filterMonth" onchange="setPeriodMonth()">
+      <button class="per-btn" id="btnAllTime" onclick="toggleAllTime()">Всё время</button>
+    </div>
+  </div>
+  <button onclick="sync()" class="btn-p" style="padding:10px 15px;font-size:10px;border-radius:8px">ОБНОВИТЬ</button>
+</div>
+
+<!-- TOP DASH -->
+<div class="top-dash">
+  <div class="glass">
+    <div class="inc-lbl">Доход за период</div>
+    <div class="inc-val" id="valEarned">0 ₴</div>
+    <div class="prog-bg"><div class="prog-fill" id="progressBar"></div></div>
+    <div style="display:flex;justify-content:space-between;font-size:10px;margin-top:9px">
+      <span id="percentText">0%</span>
+      <span id="remainText" style="opacity:.45">осталось 0 ₴</span>
+    </div>
+    <div class="inc-lbl" style="margin-top:18px">По проектам</div>
+    <div class="stat-scroll" id="projectStats"></div>
+  </div>
+  <div class="glass" style="text-align:center">
+    <div class="inc-lbl">Активность</div>
+    <div id="activityMetricWrap" style="display:none;gap:10px;align-items:center;justify-content:center;margin-bottom:10px">
+      <div style="font-size:10px;font-weight:900;opacity:.9">Метрика:</div>
+      <select id="activityMetric" class="mini-input" style="padding:6px 10px" onchange="render()">
+        <option value="count" selected>Кол-во оплат</option>
+        <option value="earn">Заработок</option>
+      </select>
+      <div style="font-size:10px;font-weight:900;opacity:.9">Год:</div>
+      <select id="activityYear" class="mini-input" style="padding:6px 10px" onchange="render()">
+        <option value="all" selected>Все</option>
+      </select>
+    </div>
+    <div class="cal-grid" id="calendar"></div>
+    <div class="g-cont"><canvas id="paymentChart"></canvas></div>
+  </div>
+  <div class="glass">
+    <div class="inc-lbl">История по месяцам</div>
+    <div class="stat-scroll" id="yearStats"></div>
+  </div>
+</div>
+
+<!-- STAT CARDS -->
+<div class="glass form-row" style="text-align:center;padding:15px">
+  <div>
+    <div class="inc-lbl" style="color:#fbbf24">Общая касса</div>
+    <div id="totalSales" style="font-size:22px;font-weight:900;color:#fbbf24">0 ₴</div>
+  </div>
+  <div>
+    <div class="inc-lbl">Средний чек</div>
+    <div id="avgCheck" style="font-size:22px;font-weight:900;color:var(--success)">0 ₴</div>
+  </div>
+  <div>
+    <div class="inc-lbl">Ср. оплат/день</div>
+    <div id="avgCount" style="font-size:22px;font-weight:900;color:var(--accent)">0</div>
+  </div>
+  <div>
+    <div class="inc-lbl">Прогноз</div>
+    <div id="forecast" style="font-size:22px;font-weight:900;color:#a855f7">0 ₴</div>
+  </div>
+</div>
+
+
+<!-- ADDITIONAL CHARTS -->
+<div class="glass" style="padding:15px">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px">
+    <div class="inc-lbl">📊 Аналитика по проектам</div>
+    <button class="s-btn s-btn-blue" onclick="toggleAdditionalCharts()">📊 Показать/Скрыть</button>
+  </div>
+  <div id="additionalChartsContainer" style="min-height:300px;display:none">
+    <canvas id="additionalChart" style="max-height:300px"></canvas>
+  </div>
+</div>
+
+<!-- ANALYTICS SECTION -->
+<div class="glass" id="analyticsSection">
+  <div class="inc-lbl" style="margin-bottom:2px">Аналитика</div>
+  <div id="analyticsMeta" class="analytics-meta">Фильтры: все менеджеры, все проекты, весь период</div>
+  <div class="analytics-kpi-grid">
+    <div class="analytics-kpi"><span>Оплаты</span><b id="anlKpiCount">0</b></div>
+    <div class="analytics-kpi"><span>Сумма</span><b id="anlKpiSales">0 ₴</b></div>
+    <div class="analytics-kpi"><span>Заработок</span><b id="anlKpiEarn">0 ₴</b></div>
+    <div class="analytics-kpi"><span>Средний чек</span><b id="anlKpiAvg">0 ₴</b></div>
+    <div class="analytics-kpi"><span>Проекты</span><b id="anlKpiProj">0</b></div>
+    <div class="analytics-kpi"><span>Менеджеры</span><b id="anlKpiMgr">0</b></div>
+  </div>
+  <div class="anl-chart-wrap"><canvas id="anlChart"></canvas></div>
+  <div class="anl-controls-row" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:6px;margin-bottom:8px">
+    <div style="font-size:10px;font-weight:900;opacity:.9">Метрика:</div>
+    <select id="anlMetric" class="mini-input" onchange="render()">
+      <option value="earn" selected>Заработок</option>
+      <option value="count">Кол-во оплат</option>
+    </select>
+    <div style="margin-left:auto;font-size:10px;font-weight:900;opacity:.9">Проекты:</div>
+    <select id="anlProjLimit" class="mini-input" onchange="render()">
+      <option value="8" selected>Топ 8</option>
+      <option value="15">Топ 15</option>
+      <option value="all">Все</option>
+    </select>
+  </div>
+
+  <div class="hm-wrap">
+    <div class="hm-title">Тепловая карта: проект × менеджер</div>
+    <div id="hmGrid" class="hm-grid"></div>
+    <div id="hmHint" class="hm-hint"></div>
+  </div>
+  <div id="compareCards" class="compare-grid"></div>
+  <div id="scoreWrap" style="margin-top:12px"></div>
+</div>
+
+<!-- ADD FORM -->
+<form class="glass form-row" id="addForm" style="position:relative">
+  <button type="button" class="cancel-btn" onclick="cancelEdit()" style="position:absolute;top:5px;right:5px;background:none;border:none;color:rgba(255,255,255,0.5);font-size:20px;cursor:pointer;padding:0;width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:4px" onmouseover="this.style.color='rgba(255,255,255,0.8)'" onmouseout="this.style.color='rgba(255,255,255,0.5)'">×</button>
+  <input type="hidden" id="fId">
+  <input type="date" id="fDate" required>
+  <input type="number" id="fAmount" placeholder="Сумма" required>
+  <input type="number" id="fActualAmount" placeholder="Фактически оплачено">
+  <select id="fProject"></select>
+  <input type="text" id="fComment" placeholder="Инфо">
+  <button type="submit" class="btn-p" id="btnLabel">ЗАФИКСИРОВАТЬ</button>
+</form>
+
+<div class="glass" style="margin-bottom:10px;padding:10px">
+  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+    <span style="font-size:12px;font-weight:700;opacity:.7">ПОИСК:</span>
+    <input type="text" id="searchInput" placeholder="Поиск по нику, номеру, имени..." style="flex:1;min-width:200px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:rgba(255,255,255,.05);color:#fff;font-size:12px" oninput="filterTable()" onpaste="handlePasteSearch(event)" onchange="filterTable()">
+    <button onclick="clearSearch()" style="padding:6px 12px;font-size:11px;border:1px solid var(--border);border-radius:6px;background:rgba(255,255,255,.1);color:#fff;cursor:pointer">ОЧИСТИТЬ</button>
+  </div>
+</div>
+
+<div class="tw">
+  <table>
+    <thead><tr><th>ДА</th><th>МЕНЕДЖЕР</th><th>ПРОЕКТ</th><th>ОПЛАТА</th><th>6%</th><th>ФАКТ. ОПЛАТА</th><th>ФАКТ. 6%</th><th>ИНФО</th><th style="text-align:right">УПР.</th></tr></thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+</div>
+
+<!-- PAYOUTS -->
+<div class="glass" id="payoutsSection">
+  <div class="payout-header" style="display:flex;justify-content:space-between">
+    <div class="payout-title-row" style="display:flex;gap:10px">
+      <div class="inc-lbl">УПРАВЛЕНИЕ ВЫПЛАТАМИ</div>
+      <button onclick="addNewProject()" class="btn-ap">+</button>
+    </div>
+    <div style="text-align:right">
+      <div class="inc-lbl" style="color:#fff;margin-bottom:0">Потенциальный остаток:</div>
+      <div id="salaryRemainder" style="font-size:20px;font-weight:900;color:#fbbf24">0 ₴</div>
+      <div class="inc-lbl" style="color:#fff;margin-top:8px;margin-bottom:0">Фактический остаток:</div>
+      <div id="actualSalaryRemainder" style="font-size:20px;font-weight:900;color:#10b981">0 ₴</div>
+    </div>
+  </div>
+  <div class="payout-grid" id="payoutGrid"></div>
+</div>
+
+<div class="tw">
+  <table>
+    <thead><tr><th>ДАТА</th><th>ТИП ОПЕРАЦИИ</th><th>МЕНЕДЖЕР</th><th>СУММА</th><th>ИНФО</th><th style="text-align:right">УПР.</th></tr></thead>
+    <tbody id="tableBodyPayouts"></tbody>
+  </table>
+</div>
+
+</div><!-- /mainApp -->
+
+<!-- Background Loader (non-blocking) -->
+<div id="background-loader" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(10,11,14,0.3);backdrop-filter:blur(4px);z-index:9998;pointer-events:none;align-items:center;justify-content:center">
+  <div style="display:flex;flex-direction:column;align-items:center;gap:12px">
+    <div style="width:40px;height:40px;border:3px solid rgba(99,102,241,0.3);border-top-color:#6366f1;border-radius:50%;animation:spin 1s linear infinite"></div>
+    <div style="color:rgba(255,255,255,0.7);font-size:12px;font-weight:600;letter-spacing:0.5px">СИНХРОНИЗАЦИЯ С ТАБЛИЦЕЙ</div>
+  </div>
+</div>
+
+<style>
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+</style>
+
+<script src="./assets/js/app.js"></script>
+</body>
+</html>
